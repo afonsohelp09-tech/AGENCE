@@ -3145,8 +3145,9 @@ async function api(payload, opts){
     const act=String(payload&&payload.action||'');
     const isGmail=act.indexOf('gmail_')===0;
     const isHeavyRead=act==='getTodasReservacoes'||act==='getBilan'||act==='getHistorico';
-    // Gmail = lent (API Google) ; lectures lourdes = plus de marge ; login/reste = rapide
-    const timeoutMs=(opts&&opts.timeoutMs)||(isGmail?55000:(isHeavyRead?45000:20000));
+    const isHeavyWrite=act==='salvarAgenciaERP'||act==='planb_saveAgencia'||act==='erp_savePermissionsHotel';
+    // Gmail = lent (API Google) ; lectures/écritures lourdes = plus de marge (lock 15s + Sheets)
+    const timeoutMs=(opts&&opts.timeoutMs)||(isGmail?55000:((isHeavyRead||isHeavyWrite)?45000:20000));
     // Usar Promise.race para timeout — AbortController não funciona no contexto Apps Script
     const fetchPromise = fetch(API_URL,{
       method:'POST',
@@ -5775,11 +5776,11 @@ async function doSaveAgence(){
     const pass=document.getElementById('ag-new-pass').value.trim();
     if(!pass){showMsgEl('add-ag-msg','Palavra-passe obrigatória (login do hotel)','error');return;}
     ag.motDePasse=pass;
-    const d=await api({action:'salvarAgenciaERP',adminToken:S.token,agencia:ag});
+    const d=await api({action:'salvarAgenciaERP',adminToken:S.token,agencia:ag},{timeoutMs:45000});
     if(d.success){
       try{
         const perms=readHotelPermsForm();
-        const dp=await api({action:'erp_savePermissionsHotel',adminToken:S.token,agencyId:id,permissions:perms});
+        const dp=await api({action:'erp_savePermissionsHotel',adminToken:S.token,agencyId:id,permissions:perms},{timeoutMs:45000});
         if(dp.success){ if(!S.permissions)S.permissions={}; S.permissions[id]=perms; }
         else if(dp.sessionExpired){ doLogout(); return; }
         else toast('⚠️ Hotel guardado, mas permissões: '+(dp.error||'erro'),'warn');
