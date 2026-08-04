@@ -749,7 +749,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="f-group"><label id="lbl-admin-id">Identificador</label><input type="text" id="a-id" placeholder="AGENCE_ADMIN" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="f-group"><label id="lbl-admin-pass">Palavra-passe</label><input type="password" id="a-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn-login" id="login-btn" onclick="doLogin()"><div class="sp"></div><span class="btn-t" id="lbl-login-btn">Aceder ao Dashboard</span></button>
-      <div class="toggle-link" style="cursor:default;opacity:.85;pointer-events:none" id="lnk-reset">🔐 Palavra-passe definida pelo Fornecedor (Plan B)</div>
+      <div class="toggle-link" style="cursor:default;opacity:.85;pointer-events:none" id="lnk-reset">🔐 Palavra-passe definida pelo nível superior — não alterável neste portal</div>
     </div>
 
     <!-- Reset étape 1 -->
@@ -846,6 +846,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <button type="button" class="nav-drawer-tab" data-tab="create" id="nav-d-create" onclick="showTab('create')">➕ <span id="nav-lbl-create">Nova</span></button>
         <button type="button" class="nav-drawer-tab" data-tab="bilan" id="nav-d-bilan" onclick="showTab('bilan')">📈 <span id="nav-lbl-bilan">Balanço</span></button>
         <button type="button" class="nav-drawer-tab" data-tab="agencias" id="nav-d-agencias" onclick="showTab('agencias')">🏢 <span id="nav-lbl-ag">Hotéis</span></button>
+        <button type="button" class="nav-drawer-tab" data-tab="lieux" id="nav-d-lieux" onclick="showTab('lieux')">📍 <span id="nav-lbl-lieux">Lugares</span></button>
         <button type="button" class="nav-drawer-tab" data-tab="chauffeurs" id="nav-d-chauffeurs" onclick="showTab('chauffeurs')">🚗 <span id="nav-lbl-ch">Chauffeurs</span></button>
         <button type="button" class="nav-drawer-tab" data-tab="equipe" id="nav-d-equipe" onclick="showTab('equipe')">👥 <span id="nav-lbl-eq">Équipe</span></button>
         <button type="button" class="nav-drawer-tab" data-tab="prices" id="nav-d-prices" onclick="showTab('prices')">💰 <span id="nav-lbl-pr">Preços</span></button>
@@ -872,6 +873,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
     <div class="tab" id="tab-create"   onclick="showTab('create')">➕ <span id="tab-lbl-create">Nova</span></div>
     <div class="tab" id="tab-bilan"    onclick="showTab('bilan')">📈 <span id="tab-lbl-bilan">Balanço</span></div>
     <div class="tab" id="tab-agencias" onclick="showTab('agencias')">🏢 <span id="tab-lbl-ag">Hotéis</span></div>
+    <div class="tab" id="tab-lieux" onclick="showTab('lieux')">📍 <span id="tab-lbl-lieux">Lugares</span></div>
     <div class="tab" id="tab-chauffeurs" onclick="showTab('chauffeurs')">🚗 <span id="tab-lbl-ch">Chauffeurs</span></div>
     <div class="tab" id="tab-equipe" onclick="showTab('equipe')">👥 <span id="tab-lbl-eq">Équipe</span></div>
     <div class="tab" id="tab-prices"   onclick="showTab('prices')">💰 <span id="tab-lbl-pr">Preços</span></div>
@@ -974,8 +976,20 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           <div class="fg"><label id="lbl-cr-email">Email *</label><input type="email" id="cr-email"></div>
           <div class="fg"><label id="lbl-cr-tel">Téléphone *</label><input type="tel" id="cr-tel" placeholder="+351 9XX…"></div>
           <div class="fg"><label id="lbl-cr-ota">N° OTA</label><input type="text" id="cr-ota" placeholder="BKG-88392…"><div class="hint lbl-cr-ota-hint">Booking.com ou Expedia</div></div>
-          <div class="fg"><label id="lbl-cr-pax">Personnes *</label><select id="cr-pax" onchange="autoPrix()"><option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9+</option></select></div>
-          <div class="fg"><label id="lbl-cr-bags">Bagages</label><select id="cr-malas"><option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option></select></div>
+          <div class="fg"><label id="lbl-cr-pax">Personnes *</label>
+            <select id="cr-pax" onchange="onCrCountSelect('cr-pax');autoPrix()">
+              <option value="">—</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9+</option>
+              <option value="__custom__">✏️ Outro…</option>
+            </select>
+            <input type="number" id="cr-pax-custom" min="1" placeholder="Nº" style="display:none;margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r)" oninput="autoPrix()">
+          </div>
+          <div class="fg"><label id="lbl-cr-bags">Bagages</label>
+            <select id="cr-malas" onchange="onCrCountSelect('cr-malas')">
+              <option value="">—</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6+</option>
+              <option value="__custom__">✏️ Outro…</option>
+            </select>
+            <input type="number" id="cr-malas-custom" min="0" placeholder="Nº" style="display:none;margin-top:6px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r)">
+          </div>
           <div class="fg"><label id="lbl-cr-lang">Langue Email (25 langues)</label>
             <select id="cr-lang">
               <option value="pt" selected>🇵🇹 Português (Portugal)</option><option value="en">🇬🇧 English</option>
@@ -1004,32 +1018,12 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
               <option value="bus">🚌 Bus / Terminal → Hotel</option>
             </select>
           </div>
-          <div class="fg"><label id="lbl-cr-depart">Départ</label><select id="cr-depart" onchange="autoPrix()">
-            <option value="Lisbon Airport">✈️ Lisbon Airport</option>
-            <option value="Agence Ruelas">🏨 Agence Ruelas</option>
-            <option value="Gare do Oriente">🚄 Gare do Oriente</option>
-            <option value="Santa Apolónia">🚂 Santa Apolónia</option>
-            <option value="Rossio">🚃 Rossio</option>
-            <option value="Entrecampos">🚉 Entrecampos</option>
-            <option value="Cais do Sodré">⛴️ Cais do Sodré</option>
-            <option value="Sete Rios Terminal">🚌 Sete Rios</option>
-          </select></div>
-          <div class="fg"><label id="lbl-cr-dest">Destination</label><select id="cr-dest" onchange="autoPrix()">
-            <option value="Agence Ruelas">🏨 Agence Ruelas</option>
-            <option value="Lisbon Airport">✈️ Lisbon Airport</option>
-            <option value="Gare do Oriente">🚄 Gare do Oriente</option>
-            <option value="Santa Apolónia">🚂 Santa Apolónia</option>
-            <option value="Rossio">🚃 Rossio</option>
-            <option value="Entrecampos">🚉 Entrecampos</option>
-            <option value="Cais do Sodré">⛴️ Cais do Sodré</option>
-            <option value="Cascais">🌊 Cascais</option>
-            <option value="Sintra">🏰 Sintra</option>
-            <option value="Estoril">🎰 Estoril</option>
-            <option value="Setúbal">⚓ Setúbal</option>
-            <option value="Belém">📍 Belém</option>
-          </select></div>
-          <div class="fg"><label><span id="lbl-cr-addr-dep">Adresse départ</span> <span class="lbl-cr-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dep" placeholder="Rua, nº…"></div>
-          <div class="fg"><label><span id="lbl-cr-addr-dest">Adresse destination</span> <span class="lbl-cr-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dest" placeholder="Rua, nº…"></div>
+          <div class="fg"><label id="lbl-cr-depart">Départ</label><select id="cr-depart" onchange="onLieuSelectChange('depart')"></select></div>
+          <div class="fg"><label id="lbl-cr-dest">Destination</label><select id="cr-dest" onchange="onLieuSelectChange('dest')"></select></div>
+          <div class="fg" id="cr-depart-custom-wrap" style="display:none"><label>Outro partida (nome)</label><input type="text" id="cr-depart-custom" placeholder="Nome do lugar…" oninput="autoPrix()"></div>
+          <div class="fg" id="cr-dest-custom-wrap" style="display:none"><label>Outro destino (nome)</label><input type="text" id="cr-dest-custom" placeholder="Nome do lugar…" oninput="autoPrix()"></div>
+          <div class="fg"><label><span id="lbl-cr-addr-dep">Adresse départ</span> <span class="lbl-cr-opt" id="cr-addr-dep-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dep" placeholder="Rua, nº…"></div>
+          <div class="fg"><label><span id="lbl-cr-addr-dest">Adresse destination</span> <span class="lbl-cr-opt" id="cr-addr-dest-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dest" placeholder="Rua, nº…"></div>
           <div class="fg"><label id="lbl-cr-date">Date</label><input type="date" id="cr-date"></div>
           <div class="fg"><label id="lbl-cr-hour">Heure (24h)</label><input type="time" id="cr-heure"></div>
           <div class="fg"><label><span id="lbl-cr-vol">Nº Vol</span> <span class="lbl-cr-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-vol" placeholder="TP234…"></div>
@@ -1039,7 +1033,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="sec-sep" id="lbl-sec-gestion">⚙️ Gestion</div>
         <div class="form-grid" style="margin-bottom:14px">
           <div class="fg"><label id="lbl-cr-statut">Statut initial</label><select id="cr-statut"><option value="pendente">⏳ Pendente</option><option value="confirmado">✅ Confirmado</option></select></div>
-          <div class="fg"><label id="lbl-cr-agency">Agence</label><select id="cr-ag"><option value="">— Non attribuée —</option></select></div>
+          <div class="fg"><label id="lbl-cr-agency">Agence</label><select id="cr-ag" onchange="onOrigChange()"><option value="">— Non attribuée —</option></select></div>
           <div class="fg"><label id="lbl-cr-prix">Prix Final (€)</label><input type="number" id="cr-prix" min="0" step="0.01" placeholder="35.00"><div class="hint" id="cr-prix-hint"></div></div>
           <div class="fg"><label id="lbl-cr-pay">Paiement</label><select id="cr-paiement"><option value="non_payé">Non payé</option><option value="payé">Payé</option></select></div>
           <div class="fg full"><label id="lbl-cr-com">Commentaires</label><textarea id="cr-com" placeholder="Informations supplémentaires…"></textarea></div>
@@ -1081,6 +1075,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
   </div>
 
   <!-- TAB AGENCES -->
+  <!-- TAB AGÊNCIAS / HOTÉIS -->
   <div class="section" id="section-agencias">
     <div class="card fadein">
       <div class="card-hdr">
@@ -1095,6 +1090,23 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       
       </div>
       <div class="tbl-wrap" id="ag-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
+    </div>
+  </div>
+
+  <!-- TAB LUGARES (départs / arrivées) -->
+  <div class="section" id="section-lieux">
+    <div class="card fadein">
+      <div class="card-hdr">
+        <div class="card-ttl" id="lbl-lieux-ttl">📍 Lugares — Partidas & Destinos</div>
+        <div class="hdr-acts">
+          <button class="btn btn-gold btn-sm" onclick="openAddLieuModal()">➕ <span id="lbl-lieux-add">Adicionar lugar</span></button>
+          <button class="btn btn-ghost btn-sm" onclick="loadLieuxTab()">↻</button>
+        </div>
+      </div>
+      <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)" id="lbl-lieux-info">
+        Configure partidas e destinos (morada opcional). Estes lugares aparecem nas listas das reservas. Cada hotel tem a sua própria morada na ficha do hotel.
+      </div>
+      <div class="tbl-wrap" id="lieux-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
     </div>
   </div>
 
@@ -1132,7 +1144,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
     </div>
   </div>
 
-  <!-- TAB HISTORIQUE (NOUVEAU — vue agrégée agence, sans bruit fournisseur) -->
+  <!-- TAB HISTORIQUE (vue agrégée agence — périmètre propre) -->
   <div class="section" id="section-historique">
     <div class="card fadein">
       <div class="card-hdr">
@@ -1144,9 +1156,15 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div style="padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:end;border-bottom:1px solid var(--border2);background:var(--surface)">
         <div class="fg" style="margin:0"><label style="font-size:11px">De</label><input type="date" id="hi-ds" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:12px"></div>
         <div class="fg" style="margin:0"><label style="font-size:11px">À</label><input type="date" id="hi-de" style="padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:12px"></div>
+        <div class="fg" style="margin:0;min-width:180px"><label style="font-size:11px">Hotel / origem</label>
+          <select id="hi-ag" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:12px">
+            <option value="">Todos (agência + hotéis)</option>
+            <option value="__AGENCE__">🏠 Serviço próprio (agência)</option>
+          </select>
+        </div>
         <div class="fg" style="margin:0;flex:1;min-width:160px"><label style="font-size:11px">Pesquisar</label><input type="text" id="hi-q" placeholder="ID, utilisateur, champ…" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:12px"></div>
         <button class="btn btn-navy btn-sm" onclick="S.hiPage=1;loadHistoriqueTab()">🔍 Filtrer</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('hi-ds').value='';document.getElementById('hi-de').value='';document.getElementById('hi-q').value='';S.hiPage=1;loadHistoriqueTab()">✕ Limpar</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('hi-ds').value='';document.getElementById('hi-de').value='';document.getElementById('hi-q').value='';document.getElementById('hi-ag').value='';S.hiPage=1;loadHistoriqueTab()">✕ Limpar</button>
       </div>
       <div class="tbl-wrap" id="hi-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
       <div class="pagination" id="hi-pagination" style="display:none;padding:10px 16px;align-items:center;justify-content:flex-end;gap:8px">
@@ -1822,6 +1840,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="form-grid" style="gap:12px">
         <div class="fg"><label>ID Hotel *</label><input type="text" id="ag-new-id" placeholder="HOT001"></div>
         <div class="fg"><label>Nome do hotel *</label><input type="text" id="ag-new-nom" placeholder="Hotel Exemplo"></div>
+        <div class="fg full-width" style="grid-column:1/-1"><label>Morada do hotel *</label><input type="text" id="ag-new-adresse" placeholder="Rua, nº, código postal, cidade…"></div>
         <div class="fg"><label>Email hotel (reset MDP) *</label><input type="email" id="ag-new-email" placeholder="hotel@email.pt"></div>
         <div class="fg"><label>Palavra-passe (login atual) *</label><input type="text" id="ag-new-pass" placeholder="ex.: hotel@2026" autocomplete="off"></div>
         <div class="fg full-width" style="grid-column:1/-1">
@@ -1891,6 +1910,33 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-add-agence')">Cancelar</button><button class="btn btn-navy" onclick="doSaveAgence()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL LIEU -->
+<div class="overlay" id="ov-lieu" onclick="closeOv('ov-lieu',event)">
+  <div class="modal">
+    <div class="modal-hdr"><div><div class="modal-ttl" id="lbl-lieu-modal-ttl">➕ Adicionar lugar</div><div class="modal-sub">Partida e/ou destino (morada opcional)</div></div><button class="modal-close" onclick="closeModal('ov-lieu')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-msg" id="lieu-msg"></div>
+      <input type="hidden" id="lieu-id" value="">
+      <div class="form-grid" style="gap:12px">
+        <div class="fg full-width" style="grid-column:1/-1"><label>Nome *</label><input type="text" id="lieu-nom" placeholder="Ex.: Lisbon Airport"></div>
+        <div class="fg"><label>Tipo</label>
+          <select id="lieu-type">
+            <option value="ambos">Partida e destino</option>
+            <option value="depart">Só partida</option>
+            <option value="arrivee">Só destino</option>
+          </select>
+        </div>
+        <div class="fg"><label>Estado</label>
+          <select id="lieu-actif"><option value="actif">✅ Ativo</option><option value="inactif">❌ Inativo</option></select>
+        </div>
+        <div class="fg"><label>Ordem</label><input type="number" id="lieu-ordre" value="100" min="0" step="1"></div>
+        <div class="fg full-width" style="grid-column:1/-1"><label>Morada (opcional)</label><input type="text" id="lieu-adresse" placeholder="Rua, nº… — útil para o motorista"></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-lieu')">Cancelar</button><button class="btn btn-navy" onclick="doSaveLieu()">💾 Guardar</button></div>
   </div>
 </div>
 
@@ -2880,7 +2926,7 @@ function updateEmailMboxPager(meta){
 // ═══════════════════════════════════════════════════════════
 const S={
   token:null,lang:'PT',
-  reservas:[],agencias:[],permissions:{},prices:[],bilanData:null,
+  reservas:[],agencias:[],permissions:{},prices:[],lieux:[],bilanData:null,
   selectedIds:new Set(),
   curId:null,curWaLang:'pt',curWaResa:null,curWaTel:null,curAgWaLang:'pt',
   emailIds:[],emailLang:'pt',
@@ -3144,7 +3190,7 @@ async function api(payload, opts){
   try{
     const act=String(payload&&payload.action||'');
     const isGmail=act.indexOf('gmail_')===0;
-    const isHeavyRead=act==='getTodasReservacoes'||act==='getBilan'||act==='getHistorico';
+    const isHeavyRead=act==='getTodasReservacoes'||act==='getBilan'||act==='getHistorico'||act==='listerHistoriqueAgence';
     const isHeavyWrite=act==='salvarAgenciaERP'||act==='planb_saveAgencia'||act==='erp_savePermissionsHotel';
     // Gmail = lent (API Google) ; lectures/écritures lourdes = plus de marge (lock 15s + Sheets)
     const timeoutMs=(opts&&opts.timeoutMs)||(isGmail?55000:((isHeavyRead||isHeavyWrite)?45000:20000));
@@ -3289,11 +3335,21 @@ async function loadAgencias(){
     S.agencias=d.agencias||[];
     S.permissions=d.permissions||S.permissions||{};
     // Mise à jour tous les selects en une passe
-    const selects=['f-ag','b-ag','cr-ag','ef-agence','as-agence'];
+    const selects=['f-ag','b-ag','cr-ag','ef-agence','as-agence','hi-ag'];
     const o=t();
     selects.forEach(id=>{
       const sel=document.getElementById(id);if(!sel)return;
       const isFilter=id==='f-ag'||id==='b-ag';
+      const isHist=id==='hi-ag';
+      if(isHist){
+        const prev=sel.value;
+        sel.innerHTML='<option value="">Todos (agência + hotéis)</option><option value="__AGENCE__">🏠 Serviço próprio (agência)</option>';
+        S.agencias.forEach(a=>{
+          const op=document.createElement('option');op.value=a.id;op.textContent=a.id+' — '+a.nom;sel.appendChild(op);
+        });
+        if(prev)sel.value=prev;
+        return;
+      }
       sel.innerHTML=isFilter?`<option value="">${o.fAgFilterAll}</option>`:`<option value="">${o.agNonAttrib}</option>`;
       if(!isFilter && id!=='as-agence'){
         const opd=document.createElement('option');opd.value='__AGENCE__';opd.textContent='🏠 Serviço próprio (sem hotel)';sel.appendChild(opd);
@@ -3549,6 +3605,7 @@ async function loadHistoriqueTab(){
       dateDe:document.getElementById('hi-ds')?.value||'',
       dateA:document.getElementById('hi-de')?.value||'',
       q:document.getElementById('hi-q')?.value||'',
+      agencia:document.getElementById('hi-ag')?.value||'',
       page:S.hiPage||1,pageSize:25,_t:Date.now()
     });
     if(!d.success){wrap.innerHTML=`<div class="empty"><div class="empty-icon">🕘</div><div class="empty-title">Erro</div><div class="empty-sub">${d.error||''}</div></div>`;return;}
@@ -3589,6 +3646,139 @@ async function loadHistoriqueTab(){
 }
 function hiPrevPage(){ if(S.hiPage>1){S.hiPage--;loadHistoriqueTab();} }
 function hiNextPage(){ if(S.hiPage<S.hiTotalPages){S.hiPage++;loadHistoriqueTab();} }
+
+// ═══════════════════════════════════════════════════════════
+// LIEUX (partidas / destinos — morada opcional)
+// ═══════════════════════════════════════════════════════════
+async function fetchLieuxList(){
+  try{
+    const d=await api({action:'getListaLieux',adminToken:S.token,_t:Date.now()},{timeoutMs:45000});
+    if(!d.success){
+      if(d.sessionExpired) doLogout();
+      return false;
+    }
+    S.lieux=(d.lieux||[]).filter(l=>!/agence\s*ruelas/i.test(l.nom||''));
+    return true;
+  }catch(e){
+    dbg('err','fetchLieuxList: '+e.message);
+    return false;
+  }
+}
+
+async function loadLieuxForCreate(){
+  await fetchLieuxList();
+  ensureCreateLieuSelects();
+  onOrigChange();
+}
+
+async function loadLieuxTab(){
+  const wrap=document.getElementById('lieux-wrap');
+  if(!wrap) return;
+  wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
+  const ok=await fetchLieuxList();
+  if(!ok){
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">Erro ao carregar lugares</div></div>';
+    return;
+  }
+  if(!S.lieux.length){
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">Nenhum lugar</div><div class="empty-sub">Os lugares por defeito serão criados no servidor. Clique em ➕ para adicionar.</div></div>';
+    return;
+  }
+  const typeLbl={ambos:'Partida e destino',depart:'Só partida',arrivee:'Só destino'};
+  const frag=document.createDocumentFragment();
+  const table=document.createElement('table');
+  const thead=document.createElement('thead');
+  thead.innerHTML='<tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Morada</th><th>Ordem</th><th>Estado</th><th>Ações</th></tr>';
+  table.appendChild(thead);
+  const tbody=document.createElement('tbody');
+  S.lieux.forEach(l=>{
+    const tr=document.createElement('tr');
+    const idEsc=String(l.id||'').replace(/'/g,"\\'");
+    tr.innerHTML=`
+      <td class="mono">${escHtml(l.id)}</td>
+      <td class="bold">${escHtml(l.nom)}</td>
+      <td style="font-size:12px">${escHtml(typeLbl[l.type]||l.type||'ambos')}</td>
+      <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escAttr(l.adresse||'')}">${escHtml(l.adresse||'—')}</td>
+      <td>${l.ordre!=null?l.ordre:'—'}</td>
+      <td><span class="badge ${l.actif!==false?'b-conf':'b-canc'}">${l.actif!==false?'● Ativo':'○ Inativo'}</span></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-gold btn-sm" onclick="openEditLieuModal('${idEsc}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="doDeleteLieu('${idEsc}')">🗑</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  frag.appendChild(table);
+  wrap.innerHTML='';
+  wrap.appendChild(frag);
+}
+
+function openAddLieuModal(){
+  document.getElementById('lbl-lieu-modal-ttl').textContent='➕ Adicionar lugar';
+  document.getElementById('lieu-msg').className='modal-msg';
+  document.getElementById('lieu-id').value='';
+  document.getElementById('lieu-nom').value='';
+  document.getElementById('lieu-type').value='ambos';
+  document.getElementById('lieu-actif').value='actif';
+  document.getElementById('lieu-ordre').value='100';
+  document.getElementById('lieu-adresse').value='';
+  openModal('ov-lieu');
+}
+
+function openEditLieuModal(id){
+  const l=(S.lieux||[]).find(x=>String(x.id)===String(id));
+  if(!l) return;
+  document.getElementById('lbl-lieu-modal-ttl').textContent='✏️ Editar lugar';
+  document.getElementById('lieu-msg').className='modal-msg';
+  document.getElementById('lieu-id').value=l.id||'';
+  document.getElementById('lieu-nom').value=l.nom||'';
+  document.getElementById('lieu-type').value=l.type||'ambos';
+  document.getElementById('lieu-actif').value=l.actif===false?'inactif':'actif';
+  document.getElementById('lieu-ordre').value=l.ordre!=null?l.ordre:100;
+  document.getElementById('lieu-adresse').value=l.adresse||'';
+  openModal('ov-lieu');
+}
+
+async function doSaveLieu(){
+  const nom=document.getElementById('lieu-nom').value.trim();
+  if(!nom){showMsgEl('lieu-msg','❌ Nome obrigatório','error');return;}
+  if(/agence\s*ruelas/i.test(nom)){showMsgEl('lieu-msg','❌ « Agence Ruelas » não é um destino/partida válido','error');return;}
+  const lieu={
+    id:document.getElementById('lieu-id').value.trim(),
+    nom,
+    type:document.getElementById('lieu-type').value,
+    actif:document.getElementById('lieu-actif').value,
+    ordre:document.getElementById('lieu-ordre').value,
+    adresse:document.getElementById('lieu-adresse').value.trim()
+  };
+  try{
+    const d=await api({action:'salvarLieuERP',adminToken:S.token,lieu},{timeoutMs:45000});
+    if(d.success){
+      toast('📍 Lugar guardado','success');
+      closeModal('ov-lieu');
+      await loadLieuxTab();
+      ensureCreateLieuSelects();
+    }else{
+      if(d.sessionExpired) doLogout();
+      showMsgEl('lieu-msg','❌ '+(d.error||'Erro'),'error');
+    }
+  }catch(e){showMsgEl('lieu-msg','❌ '+e.message,'error');}
+}
+
+async function doDeleteLieu(id){
+  if(!id||!confirm('Eliminar este lugar?')) return;
+  try{
+    const d=await api({action:'supprimerLieuERP',adminToken:S.token,lieuId:id},{timeoutMs:45000});
+    if(d.success){
+      toast('🗑 Lugar eliminado','success');
+      await loadLieuxTab();
+      ensureCreateLieuSelects();
+    }else{
+      if(d.sessionExpired) doLogout();
+      toast('❌ '+(d.error||'Erro'),'error');
+    }
+  }catch(e){toast('❌ '+e.message,'error');}
+}
 
 async function loadPrices(){
   const wrap=document.getElementById('pr-wrap');
@@ -4952,13 +5142,101 @@ async function doAssign(){
 // ═══════════════════════════════════════════════════════════
 function onOrigChange(){
   const orig=document.getElementById('cr-orig').value;
+  const hotelNom=hotelLieuNomFromCrAg_();
+  ensureCreateLieuSelects();
   const dep=document.getElementById('cr-depart'),dest=document.getElementById('cr-dest');
-  if(orig==='airport'){dep.value='Lisbon Airport';dest.value='Agence Ruelas';}
-  else if(orig==='hotel'){dep.value='Agence Ruelas';dest.value='Lisbon Airport';}
-  else if(orig==='highspeed'){dep.value='Gare do Oriente';dest.value='Agence Ruelas';}
-  else if(orig==='train'){dep.value='Santa Apolónia';dest.value='Agence Ruelas';}
-  else if(orig==='bus'){dep.value='Sete Rios Terminal';dest.value='Agence Ruelas';}
+  if(orig==='airport'){setCrLieuSelect_('depart','Lisbon Airport');setCrLieuSelect_('dest',hotelNom||'');}
+  else if(orig==='hotel'){setCrLieuSelect_('depart',hotelNom||'');setCrLieuSelect_('dest','Lisbon Airport');}
+  else if(orig==='highspeed'){setCrLieuSelect_('depart','Gare do Oriente');setCrLieuSelect_('dest',hotelNom||'');}
+  else if(orig==='train'){setCrLieuSelect_('depart','Santa Apolónia');setCrLieuSelect_('dest',hotelNom||'');}
+  else if(orig==='bus'){setCrLieuSelect_('depart','Sete Rios Terminal');setCrLieuSelect_('dest',hotelNom||'');}
+  onLieuSelectChange('depart');
+  onLieuSelectChange('dest');
   autoPrix();
+}
+
+function hotelLieuNomFromCrAg_(){
+  const agId=document.getElementById('cr-ag')?.value||'';
+  if(!agId) return '';
+  const a=(S.agencias||[]).find(x=>x.id===agId);
+  return a ? (a.nom||'') : '';
+}
+
+function setCrLieuSelect_(which,nom){
+  const sel=document.getElementById(which==='depart'?'cr-depart':'cr-dest');
+  if(!sel) return;
+  const v=String(nom||'').trim();
+  if(!v){ sel.value=''; return; }
+  const has=[...sel.options].some(o=>o.value===v);
+  if(!has){
+    const o=document.createElement('option');
+    o.value=v; o.textContent='🏨 '+v; o.dataset.adresse=((S.agencias||[]).find(a=>a.nom===v)||{}).adresse||'';
+    sel.appendChild(o);
+  }
+  sel.value=v;
+}
+
+function lieuxForRole_(role){
+  const list=(S.lieux||[]).filter(l=>l.actif!==false && !/agence\s*ruelas/i.test(l.nom||''));
+  return list.filter(l=>{
+    const t=l.type||'ambos';
+    if(role==='depart') return t==='depart'||t==='ambos';
+    if(role==='arrivee') return t==='arrivee'||t==='ambos';
+    return true;
+  });
+}
+
+function ensureCreateLieuSelects(){
+  fillCrLieuSelect('cr-depart','depart');
+  fillCrLieuSelect('cr-dest','arrivee');
+}
+
+function fillCrLieuSelect(selId, role){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  const prev=sel.value;
+  const lieux=lieuxForRole_(role==='depart'?'depart':'arrivee');
+  let html='<option value="">— Selecionar —</option>';
+  lieux.forEach(l=>{
+    html+=`<option value="${escAttr(l.nom)}" data-adresse="${escAttr(l.adresse||'')}">${escHtml(l.nom)}${l.adresse?' · 📍':''}</option>`;
+  });
+  (S.agencias||[]).filter(a=>a.statut!=='inactif').forEach(a=>{
+    if(!a.nom) return;
+    if(lieux.some(l=>String(l.nom).toLowerCase()===String(a.nom).toLowerCase())) return;
+    html+=`<option value="${escAttr(a.nom)}" data-adresse="${escAttr(a.adresse||a.morada||'')}">🏨 ${escHtml(a.nom)}</option>`;
+  });
+  html+=`<option value="__custom__">✏️ Outro (escrever…)</option>`;
+  sel.innerHTML=html;
+  if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+}
+
+function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function onLieuSelectChange(which){
+  const isDep=which==='depart';
+  const sel=document.getElementById(isDep?'cr-depart':'cr-dest');
+  const wrap=document.getElementById(isDep?'cr-depart-custom-wrap':'cr-dest-custom-wrap');
+  const addr=document.getElementById(isDep?'cr-addr-dep':'cr-addr-dest');
+  const optLbl=document.getElementById(isDep?'cr-addr-dep-opt':'cr-addr-dest-opt');
+  if(!sel) return;
+  const custom=sel.value==='__custom__';
+  if(wrap) wrap.style.display=custom?'':'none';
+  const opt=sel.selectedOptions&&sel.selectedOptions[0];
+  const preAdr=opt? (opt.getAttribute('data-adresse')||'') : '';
+  if(!custom && addr && preAdr && !addr.value) addr.value=preAdr;
+  if(optLbl) optLbl.textContent=custom?'* obrig.':' (opt.)';
+  autoPrix();
+}
+
+function getCrLieuValue(which){
+  const isDep=which==='depart';
+  const sel=document.getElementById(isDep?'cr-depart':'cr-dest');
+  if(!sel) return '';
+  if(sel.value==='__custom__'){
+    return (document.getElementById(isDep?'cr-depart-custom':'cr-dest-custom')?.value||'').trim();
+  }
+  return (sel.value||'').trim();
 }
 
 function parsePaxUi(v){
@@ -4967,6 +5245,22 @@ function parsePaxUi(v){
   if(s.includes('+')){const n=parseInt(s,10);return isNaN(n)?9:Math.max(1,n);}
   const n=parseInt(s,10);
   return isNaN(n)||n<1?1:n;
+}
+function onCrCountSelect(baseId){
+  const sel=document.getElementById(baseId);
+  const custom=document.getElementById(baseId+'-custom');
+  if(!sel||!custom) return;
+  const isCustom=sel.value==='__custom__';
+  custom.style.display=isCustom?'':'none';
+  if(isCustom) custom.focus();
+}
+function getCrCountValue(baseId){
+  const sel=document.getElementById(baseId);
+  if(!sel) return '';
+  if(sel.value==='__custom__'){
+    return (document.getElementById(baseId+'-custom')?.value||'').trim();
+  }
+  return (sel.value||'').trim();
 }
 function matchPriceRoute(p,de,dest){
   const pd=String(p.de||'').toLowerCase(),pp=String(p.pour||'').toLowerCase();
@@ -4985,9 +5279,9 @@ function findTarif(prices,de,dest,paxVal){
 }
 
 function autoPrix(){
-  const de=document.getElementById('cr-depart').value;
-  const dest=document.getElementById('cr-dest').value;
-  const paxVal=document.getElementById('cr-pax')?.value;
+  const de=getCrLieuValue('depart');
+  const dest=getCrLieuValue('dest');
+  const paxVal=getCrCountValue('cr-pax');
   const hint=document.getElementById('cr-prix-hint');
   const prixEl=document.getElementById('cr-prix');
   const tx=t();
@@ -5009,7 +5303,19 @@ function autoPrix(){
 }
 
 async function doCreateReserva(){
-  for(const[fid,lbl]of[['cr-nom','Nom'],['cr-email','Email'],['cr-tel','Téléphone'],['cr-pax','Personnes']]){if(!document.getElementById(fid)?.value.trim()){showInlineError('Champ obligatoire : '+lbl,'warn');return;}}
+  for(const[fid,lbl]of[['cr-nom','Nom'],['cr-email','Email'],['cr-tel','Téléphone']]){if(!document.getElementById(fid)?.value.trim()){showInlineError('Champ obligatoire : '+lbl,'warn');return;}}
+  const personnes=getCrCountValue('cr-pax');
+  const malas=getCrCountValue('cr-malas')||'0';
+  if(!personnes){showInlineError('Champ obligatoire : Personnes','warn');return;}
+  const pointDepart=getCrLieuValue('depart');
+  const destination=getCrLieuValue('dest');
+  if(!pointDepart||!destination){showInlineError('Partida e destino são obrigatórios','warn');return;}
+  const depCustom=document.getElementById('cr-depart')?.value==='__custom__';
+  const destCustom=document.getElementById('cr-dest')?.value==='__custom__';
+  const adresseDepart=document.getElementById('cr-addr-dep').value.trim();
+  const adresseDestination=document.getElementById('cr-addr-dest').value.trim();
+  if(depCustom && !adresseDepart){showInlineError('Morada de partida obrigatória quando o lugar não está na lista','warn');return;}
+  if(destCustom && !adresseDestination){showInlineError('Morada de destino obrigatória quando o lugar não está na lista','warn');return;}
   document.getElementById('create-msg').className='modal-msg';
   try{
     const d=await api({action:'creerReservacaoERP',adminToken:S.token,
@@ -5017,14 +5323,14 @@ async function doCreateReserva(){
       email:document.getElementById('cr-email').value.trim(),
       telephone:normaliserTelephonePourSauvegarde(document.getElementById('cr-tel').value),
       numReservaOta:document.getElementById('cr-ota').value.trim(),
-      personnes:document.getElementById('cr-pax').value,
-      malas:document.getElementById('cr-malas').value||'0',
+      personnes,
+      malas,
       langue:document.getElementById('cr-lang').value,
       origineType:document.getElementById('cr-orig').value,
-      pointDepart:document.getElementById('cr-depart').value,
-      destination:document.getElementById('cr-dest').value,
-      adresseDepart:document.getElementById('cr-addr-dep').value.trim(),
-      adresseDestination:document.getElementById('cr-addr-dest').value.trim(),
+      pointDepart,
+      destination,
+      adresseDepart,
+      adresseDestination,
       dateTransfer:document.getElementById('cr-date').value,
       heureTransfer:document.getElementById('cr-heure').value,
       numVol:document.getElementById('cr-vol').value.trim(),
@@ -5045,8 +5351,15 @@ async function doCreateReserva(){
 }
 
 function resetCreateForm(){
-  ['cr-nom','cr-email','cr-tel','cr-ota','cr-vol','cr-transport','cr-room','cr-date','cr-heure','cr-prix','cr-com','cr-addr-dep','cr-addr-dest'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['cr-nom','cr-email','cr-tel','cr-ota','cr-vol','cr-transport','cr-room','cr-date','cr-heure','cr-prix','cr-com','cr-addr-dep','cr-addr-dest','cr-depart-custom','cr-dest-custom','cr-pax-custom','cr-malas-custom'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   ['cr-pax','cr-malas','cr-ag'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['cr-pax-custom','cr-malas-custom','cr-depart-custom-wrap','cr-dest-custom-wrap'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(!e) return;
+    if(id.endsWith('-wrap')||id.endsWith('-custom')) e.style.display='none';
+  });
+  const paxC=document.getElementById('cr-pax-custom'); if(paxC) paxC.style.display='none';
+  const malC=document.getElementById('cr-malas-custom'); if(malC) malC.style.display='none';
   document.getElementById('cr-orig').value='airport';document.getElementById('cr-lang').value='pt';
   document.getElementById('cr-statut').value='pendente';document.getElementById('cr-paiement').value='non_payé';
   document.getElementById('create-msg').className='modal-msg';document.getElementById('cr-prix-hint').textContent='';
@@ -5714,7 +6027,7 @@ function formatPermsBadges(p){
 }
 
 function openAddAgenceModal(){
-  ['ag-new-id','ag-new-nom','ag-new-email','ag-new-pass','ag-new-wa','ag-new-meth-libre'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['ag-new-id','ag-new-nom','ag-new-email','ag-new-pass','ag-new-wa','ag-new-meth-libre','ag-new-adresse'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   document.getElementById('ag-new-use-wa').value='sim';document.getElementById('ag-new-lang').value='PT';
   document.getElementById('ag-new-email-notif').value='sim';
   document.getElementById('ag-new-meth').value='virement';document.getElementById('ag-new-statut').value='actif';
@@ -5738,6 +6051,7 @@ function openEditAgenceModal(id){
   document.getElementById('ag-new-id').value=a.id;document.getElementById('ag-new-nom').value=a.nom||'';
   document.getElementById('ag-new-pass').value=a.motDePasse||'';
   document.getElementById('ag-new-email').value=a.email||'';document.getElementById('ag-new-wa').value=a.telefoneWA||a.telefoneWhatsapp||'';
+  const adrEl=document.getElementById('ag-new-adresse'); if(adrEl) adrEl.value=a.adresse||a.morada||'';
   document.getElementById('ag-new-use-wa').value=a.useWA||a.useWhatsapp||'nao';document.getElementById('ag-new-lang').value=a.langueContact||'PT';
   document.getElementById('ag-new-email-notif').value=(a.emailNotifAtrib==='nao')?'nao':'sim';
   const m=String(a.methodePaiement||'virement').trim();
@@ -5758,7 +6072,9 @@ async function doSaveAgence(){
   const id=document.getElementById('ag-new-id').value.trim();
   const nom=document.getElementById('ag-new-nom').value.trim();
   const email=document.getElementById('ag-new-email').value.trim();
+  const adresse=(document.getElementById('ag-new-adresse')?.value||'').trim();
   if(!id||!nom||!email){showMsgEl('add-ag-msg','ID, Nome e Email são obrigatórios','error');return;}
+  if(!adresse){showMsgEl('add-ag-msg','Morada do hotel é obrigatória','error');return;}
   try{
     const wa=document.getElementById('ag-new-wa').value;
     const useWa=document.getElementById('ag-new-use-wa').value;
@@ -5766,7 +6082,7 @@ async function doSaveAgence(){
     const methFin=selM==='__custom__'
       ? (document.getElementById('ag-new-meth-libre').value||'').trim()||'virement'
       : selM;
-    const ag={id,nom,email,
+    const ag={id,nom,email,adresse,morada:adresse,
       statut:document.getElementById('ag-new-statut').value,
       methodePaiement:methFin,
       telefoneWA:wa,useWA:useWa,telefoneWhatsapp:wa,useWhatsapp:useWa,
@@ -5995,10 +6311,11 @@ function showTab(name){
   if(name==='reservas')loadReservas();
   else if(name==='upcoming'){ if(S.reservas.length)renderUpcoming(); else loadReservas(); }
   else if(name==='agencias')loadAgenciasTab();
+  else if(name==='lieux')loadLieuxTab();
   else if(name==='chauffeurs')loadChauffeursTab();
   else if(name==='equipe')loadEquipeTab();
   else if(name==='prices')loadPrices();
-  else if(name==='create')loadPrices();
+  else if(name==='create'){ loadPrices(); loadLieuxForCreate(); }
   else if(name==='email'){showTab('reservas');return;}
   else if(name==='historique'){S.hiPage=1;loadHistoriqueTab();}
 }
