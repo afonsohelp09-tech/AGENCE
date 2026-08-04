@@ -737,14 +737,14 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="login-emblem" id="logo-triple"><img src="logo-login.png" alt="Agence Ruelas" width="160" height="160" decoding="async"></div>
       <div class="login-brand">Agence Ruelas</div>
       <div class="login-sub">Lisboa · Portugal</div>
-      <div class="login-badge">🏨 ERP Transfers — Staff Agence</div>
+      <div class="login-badge">🏨 Portal Agence — Agence Ruelas</div>
     </div>
 
     <div class="login-divider"></div>
 
     <!-- Connexion -->
     <div id="step-login">
-      <div class="login-title" id="lbl-login-title">Acesso Administração</div>
+      <div class="login-title" id="lbl-login-title">Acesso Portal Agence</div>
       <div class="msg-box err" id="login-err"></div>
       <div class="f-group"><label id="lbl-admin-id">Identificador</label><input type="text" id="a-id" placeholder="AGENCE_ADMIN" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <div class="f-group"><label id="lbl-admin-pass">Palavra-passe</label><input type="password" id="a-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -5524,9 +5524,7 @@ function downloadExcel(rows,name,sheetName){
   const data=padExcelRows(rows);
   let html='<!DOCTYPE html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8">';
   html+='<!--[if gte mso 9]><xml><x:ExcelWorkbook xmlns:x="urn:schemas-microsoft-com:office:excel"><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>'+excelEscape(sheetName)+'</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->';
-  html+='<style>table{border-collapse:collapse}td{border:1px solid #c5cdd8;padding:6px 8px;font:11pt Calibri,Arial,sans-serif;vertical-align:top;mso-number-format:"\\@"} .sec{background:#eef2f7;font-weight:bold} .meta{background:#f7f9fb}
-
-</style></head><body><table>';
+  html+='<style>table{border-collapse:collapse}td{border:1px solid #c5cdd8;padding:6px 8px;font:11pt Calibri,Arial,sans-serif;vertical-align:top;mso-number-format:"\\@"} .sec{background:#eef2f7;font-weight:bold} .meta{background:#f7f9fb}</style></head><body><table>';
   data.forEach((r,ri)=>{
     html+='<tr>';
     r.forEach((cell,ci)=>{
@@ -6479,9 +6477,7 @@ async function openEmailMailboxMessage(messageId){
       const minH=isPhone?Math.max(240,Math.round(window.innerHeight*0.4)):320;
       ifr.style.cssText='width:100%;max-width:100%;min-height:'+minH+'px;border:0;background:#fff;display:block';
       htmlBox.appendChild(ifr);
-      const wrapCss='<style>html,body{margin:0;padding:12px;max-width:100%;overflow-x:hidden;overflow-y:visible;word-wrap:break-word;overflow-wrap:anywhere;box-sizing:border-box;font-family:Arial,sans-serif;font-size:'+(isPhone?'15':'14')+'px;line-height:1.55;color:#111;-webkit-text-size-adjust:100%}img,table,pre,code,iframe,video{max-width:100%!important;height:auto!important}table{table-layout:fixed;width:100%!important}td,th{word-wrap:break-word;overflow-wrap:anywhere}@media(max-width:480px){body{padding:10px;font-size:15px}}
-
-</style>';
+      const wrapCss='<style>html,body{margin:0;padding:12px;max-width:100%;overflow-x:hidden;overflow-y:visible;word-wrap:break-word;overflow-wrap:anywhere;box-sizing:border-box;font-family:Arial,sans-serif;font-size:'+(isPhone?'15':'14')+'px;line-height:1.55;color:#111;-webkit-text-size-adjust:100%}img,table,pre,code,iframe,video{max-width:100%!important;height:auto!important}table{table-layout:fixed;width:100%!important}td,th{word-wrap:break-word;overflow-wrap:anywhere}@media(max-width:480px){body{padding:10px;font-size:15px}}</style>';
       const raw=String(m.bodyHtml||'');
       ifr.srcdoc=raw.indexOf('<html')>=0||raw.indexOf('<HTML')>=0
         ? raw.replace(/<head([^>]*)>/i,'<head$1><meta name="viewport" content="width=device-width,initial-scale=1">'+wrapCss)
