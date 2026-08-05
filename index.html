@@ -141,7 +141,7 @@ body.nav-drawer-open{overflow:hidden;touch-action:none}
 
 .main{flex:1;overflow-y:auto}
 .section{display:none;padding:24px;max-width:1500px;margin:0 auto}
-.section.active{display:block;animation:fadeUp .3s ease}
+.section.active{display:block}
 
 /* STATS */
 .stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:22px}
@@ -670,7 +670,50 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
 
 /* Portal Agence: onglet Gmail boîte retiré */
 #tab-email,#nav-d-email,#section-email{display:none!important}
+
+/* Route map compact (création réservation) */
+.route-map-wrap{grid-column:1/-1;margin:2px 0 4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:100%;min-width:0}
+.route-map-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid var(--border2);background:var(--white)}
+.route-map-legend{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--tm);flex-wrap:wrap}
+.route-map-pin{display:inline-flex;align-items:center;gap:5px}
+.route-map-dot{width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;line-height:1;flex-shrink:0}
+.route-map-dot.a{background:var(--navy)}
+.route-map-dot.b{background:var(--gold);color:var(--navy)}
+.route-map-status{font-size:10px;color:var(--ts);font-weight:500;max-width:50%;text-align:right;line-height:1.35;word-break:break-word}
+.route-map-el{height:150px;width:100%;max-width:100%;background:#dce6f0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.route-map-el .leaflet-container{font:inherit;width:100%!important;height:100%!important}
+.route-map-el .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;font-size:16px!important}
+.route-map-marker{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff}
+.route-map-marker.a{background:#0D2137}
+.route-map-marker.b{background:#C9A84C;color:#0D2137}
+#exp-cols{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px 12px;margin-bottom:8px;font-size:12px}
+#exp-hotels-list{max-height:120px;overflow:auto;-webkit-overflow-scrolling:touch}
+#lieu-mode-wrap label,#exp-custom-wrap label{min-height:44px;align-items:center}
+@media(max-width:768px){
+  .route-map-el{height:160px}
+  .route-map-bar{flex-direction:column;align-items:flex-start;gap:6px;padding:8px 10px}
+  .route-map-status{max-width:100%;text-align:left;font-size:11px}
+  .route-map-el .leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important}
+  #section-create .form-grid input,
+  #section-create .form-grid select,
+  #section-create .form-grid textarea,
+  #ov-lieu input,#ov-lieu select,
+  #ov-export input,#ov-export select,
+  #ov-trajet-hotel input,#ov-trajet-hotel select{font-size:16px;min-height:44px}
+  #exp-cols{grid-template-columns:1fr;gap:8px;font-size:13px}
+  #exp-cols label,#exp-hotels-list label{min-height:44px;padding:4px 0;display:flex;align-items:center}
+  #exp-hotels-list{max-height:160px}
+  #lieu-mode-wrap{gap:10px!important}
+  #lieu-mode-wrap label{font-size:14px!important;line-height:1.35}
+  .modal.wide{max-width:100%}
+  .hdr-acts .btn{font-size:12px}
+}
+@media(max-width:430px){
+  .route-map-el{height:148px}
+}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="favicon.ico" type="image/x-icon" sizes="32x32">
 <link rel="icon" href="icon-32.png" type="image/png" sizes="32x32">
@@ -826,7 +869,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         </select>
       </div>
       <button class="btn-tb gold" onclick="showTab('create')" id="lbl-new-resa">+ Nova</button>
-      <button class="btn-tb" onclick="loadReservas()">↻</button>
+      <button class="btn-tb" onclick="loadReservas({force:true})">↻</button>
       <button class="btn-tb" onclick="doLogout()" id="lbl-logout">⎋ Sair</button>
     </div>
   </div>
@@ -855,7 +898,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="nav-drawer-subttl" id="lbl-nav-quick">Acções rápidas</div>
         <div class="nav-drawer-actions">
           <button type="button" class="btn-tb gold" onclick="showTab('create')" id="lbl-new-resa-nav">+ Nova</button>
-          <button type="button" class="btn-tb" onclick="loadReservas()" id="lbl-refresh-nav">↻ Atualizar</button>
+          <button type="button" class="btn-tb" onclick="loadReservas({force:true})" id="lbl-refresh-nav">↻ Atualizar</button>
         </div>
         <div class="nav-drawer-lang" id="nav-drawer-lang">
           <button class="lp active" type="button" onclick="setLang('PT','app')">PT</button>
@@ -901,7 +944,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           <button class="btn btn-ghost btn-sm" onclick="openExportModal('pdf')">⬇ PDF</button>
           <button class="btn btn-ghost btn-sm" onclick="openExportModal('excel')">⬇ Excel</button>
           <button class="btn btn-ghost btn-sm" onclick="openExportModal('pdf')">🖨️</button>
-          <button class="btn btn-navy btn-sm" onclick="loadReservas()">↻ <span id="lbl-refresh-txt">Atualizar</span></button>
+          <button class="btn btn-navy btn-sm" onclick="loadReservas({force:true})">↻ <span id="lbl-refresh-txt">Atualizar</span></button>
         </div>
       </div>
       <!-- BULK BAR -->
@@ -915,7 +958,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <button class="btn btn-ghost btn-sm" onclick="deselectAll()">✕ <span id="lbl-bulk-desel">Desselecionar</span></button>
       </div>
       <div class="filters">
-        <div class="fg-f"><label id="lbl-f-search">Pesquisa</label><input type="text" class="f-in" id="f-search" oninput="renderTable()" placeholder="ID, cliente, email…"></div>
+        <div class="fg-f"><label id="lbl-f-search">Pesquisa</label><input type="text" class="f-in" id="f-search" oninput="debounceRenderTable()" placeholder="ID, cliente, email…"></div>
         <div class="fg-f"><label id="lbl-f-statut">Estado</label>
           <select class="f-sel" id="f-statut" onchange="renderTable()">
             <option value="">Tous</option>
@@ -1020,10 +1063,20 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           </div>
           <div class="fg"><label id="lbl-cr-depart">Départ</label><select id="cr-depart" onchange="onLieuSelectChange('depart')"></select></div>
           <div class="fg"><label id="lbl-cr-dest">Destination</label><select id="cr-dest" onchange="onLieuSelectChange('dest')"></select></div>
-          <div class="fg" id="cr-depart-custom-wrap" style="display:none"><label>Outro partida (nome)</label><input type="text" id="cr-depart-custom" placeholder="Nome do lugar…" oninput="autoPrix()"></div>
-          <div class="fg" id="cr-dest-custom-wrap" style="display:none"><label>Outro destino (nome)</label><input type="text" id="cr-dest-custom" placeholder="Nome do lugar…" oninput="autoPrix()"></div>
-          <div class="fg"><label><span id="lbl-cr-addr-dep">Adresse départ</span> <span class="lbl-cr-opt" id="cr-addr-dep-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dep" placeholder="Rua, nº…"></div>
-          <div class="fg"><label><span id="lbl-cr-addr-dest">Adresse destination</span> <span class="lbl-cr-opt" id="cr-addr-dest-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dest" placeholder="Rua, nº…"></div>
+          <div class="fg" id="cr-depart-custom-wrap" style="display:none"><label>Outro partida (nome)</label><input type="text" id="cr-depart-custom" placeholder="Nome do lugar…" oninput="autoPrix();scheduleCrRouteMap()"></div>
+          <div class="fg" id="cr-dest-custom-wrap" style="display:none"><label>Outro destino (nome)</label><input type="text" id="cr-dest-custom" placeholder="Nome do lugar…" oninput="autoPrix();scheduleCrRouteMap()"></div>
+          <div class="fg"><label><span id="lbl-cr-addr-dep">Adresse départ</span> <span class="lbl-cr-opt" id="cr-addr-dep-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dep" placeholder="Rua, nº…" oninput="scheduleCrRouteMap()"></div>
+          <div class="fg"><label><span id="lbl-cr-addr-dest">Adresse destination</span> <span class="lbl-cr-opt" id="cr-addr-dest-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dest" placeholder="Rua, nº…" oninput="scheduleCrRouteMap()"></div>
+          <div class="route-map-wrap" id="cr-route-map-wrap">
+            <div class="route-map-bar">
+              <div class="route-map-legend">
+                <span class="route-map-pin"><span class="route-map-dot a">A</span> Partida</span>
+                <span class="route-map-pin"><span class="route-map-dot b">B</span> Destino</span>
+              </div>
+              <div class="route-map-status" id="cr-route-map-status">Selecione partida / destino</div>
+            </div>
+            <div class="route-map-el" id="cr-route-map" role="img" aria-label="Mapa do trajeto"></div>
+          </div>
           <div class="fg"><label id="lbl-cr-date">Date</label><input type="date" id="cr-date"></div>
           <div class="fg"><label id="lbl-cr-hour">Heure (24h)</label><input type="time" id="cr-heure"></div>
           <div class="fg"><label><span id="lbl-cr-vol">Nº Vol</span> <span class="lbl-cr-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-vol" placeholder="TP234…"></div>
@@ -1082,7 +1135,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="card-ttl" id="lbl-ag-ttl">🏢 Gestão de Hotéis</div>
         <div class="hdr-acts">
           <button class="btn btn-gold btn-sm" onclick="openAddAgenceModal()">➕ <span id="lbl-ag-add">Adicionar hotel</span></button>
-          <button class="btn btn-ghost btn-sm" onclick="loadAgenciasTab()">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadAgenciasTab({force:true})">↻</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)" id="lbl-ag-info">
@@ -1101,7 +1154,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="hdr-acts">
           <button class="btn btn-ghost btn-sm" onclick="openAddLieuModal()">➕ <span id="lbl-lieux-add">Lugar geral</span></button>
           <button class="btn btn-gold btn-sm" onclick="openAddTrajetHotelModal()">🏨 <span id="lbl-lieux-trajet">Trajeto hotel</span></button>
-          <button class="btn btn-ghost btn-sm" onclick="loadLieuxTab()">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadLieuxTab({force:true})">↻</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)" id="lbl-lieux-info">
@@ -1125,7 +1178,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="card-ttl">🚗 Chauffeurs</div>
         <div class="hdr-acts">
           <button class="btn btn-gold btn-sm" onclick="openAddChauffeurModal()">➕ Adicionar motorista</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadChauffeursTab()">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadChauffeursTab({force:true})">↻</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)">
@@ -1142,7 +1195,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="card-ttl">👥 Équipe</div>
         <div class="hdr-acts">
           <button class="btn btn-gold btn-sm" onclick="openAddEquipeModal()">➕ Adicionar membro</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadEquipeTab()">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadEquipeTab({force:true})">↻</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)">
@@ -1190,7 +1243,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
                <div class="card-ttl" id="lbl-pr-ttl">💰 Tabela de Preços</div>
         <div class="hdr-acts">
           <button class="btn btn-gold btn-sm" onclick="openAddPriceModal()">➕ Preço</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadPrices()">↻</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadPrices({force:true})">↻</button>
           <button class="btn btn-ghost btn-sm" onclick="exportPrixCSV()">⬇ CSV</button>
         </div>
       </div>
@@ -1199,7 +1252,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       </div>
       <div style="padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border2)">
         <label style="font-size:12px;font-weight:600">Filtrar</label>
-        <select id="pr-filter-hotel" onchange="loadPrices()" style="min-width:200px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px">
+        <select id="pr-filter-hotel" onchange="loadPrices({force:true})" style="min-width:200px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px">
           <option value="">Todos</option>
           <option value="__GLOBAL__">Só gerais</option>
         </select>
@@ -1936,18 +1989,38 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
   </div>
 </div>
 
-<!-- MODAL LIEU (geral) -->
+<!-- MODAL LIEU (geral) — Partida / Destino / ambos + moradas -->
 <div class="overlay" id="ov-lieu" onclick="closeOv('ov-lieu',event)">
-  <div class="modal">
-    <div class="modal-hdr"><div><div class="modal-ttl" id="lbl-lieu-modal-ttl">➕ Adicionar lugar</div><div class="modal-sub">Lugar geral (todos os hotéis) — morada opcional</div></div><button class="modal-close" onclick="closeModal('ov-lieu')">✕</button></div>
+  <div class="modal wide">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-ttl" id="lbl-lieu-modal-ttl">➕ Adicionar lugar</div>
+        <div class="modal-sub" id="lbl-lieu-modal-sub">Lugar geral (todos os hotéis) — Partida e/ou Destino com morada</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('ov-lieu')">✕</button>
+    </div>
     <div class="modal-body">
       <div class="modal-msg" id="lieu-msg"></div>
       <input type="hidden" id="lieu-id" value="">
-      <div class="form-grid" style="gap:12px">
+
+      <div id="lieu-mode-wrap" style="display:grid;gap:8px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--tm)">O que pretende guardar?</div>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px">
+          <input type="radio" name="lieu-mode" value="single" checked onchange="syncLieuModeUi()">
+          <span><strong>Um lugar</strong> — só partida, só destino, ou o mesmo nome nos dois lados</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px" id="lieu-mode-pair-label">
+          <input type="radio" name="lieu-mode" value="pair" onchange="syncLieuModeUi()">
+          <span><strong>Partida + Destino</strong> — dois lugares de uma vez, cada um com a sua morada</span>
+        </label>
+      </div>
+
+      <!-- Mode: um lugar -->
+      <div id="lieu-single-wrap" class="form-grid" style="gap:12px">
         <div class="fg full-width" style="grid-column:1/-1"><label>Nome *</label><input type="text" id="lieu-nom" placeholder="Ex.: Lisbon Airport"></div>
-        <div class="fg"><label>Tipo</label>
-          <select id="lieu-type">
-            <option value="ambos">Partida e destino</option>
+        <div class="fg"><label>Tipo *</label>
+          <select id="lieu-type" onchange="onLieuTypeChange()">
+            <option value="ambos">Partida e destino (mesmo lugar)</option>
             <option value="depart">Só partida</option>
             <option value="arrivee">Só destino</option>
           </select>
@@ -1956,13 +2029,37 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           <select id="lieu-actif"><option value="actif">✅ Ativo</option><option value="inactif">❌ Inativo</option></select>
         </div>
         <div class="fg"><label>Ordem</label><input type="number" id="lieu-ordre" value="100" min="0" step="1"></div>
-        <div class="fg full-width" style="grid-column:1/-1"><label>Morada (opcional)</label><input type="text" id="lieu-adresse" placeholder="Rua, nº… — útil para o motorista"></div>
+        <div class="fg full-width" style="grid-column:1/-1" id="lieu-addr-single-wrap">
+          <label id="lbl-lieu-adresse">Morada (opcional)</label>
+          <input type="text" id="lieu-adresse" placeholder="Rua, nº… — útil para o motorista">
+          <div id="lieu-addr-hint" style="font-size:11px;color:var(--ts);margin-top:6px"></div>
+        </div>
         <div class="fg full-width" style="grid-column:1/-1"><label>Âmbito</label>
           <select id="lieu-agency" onchange="onLieuAgencyChange()">
             <option value="">Geral (todos)</option>
           </select>
           <div style="font-size:11px;color:var(--ts);margin-top:6px">Se escolher um hotel, este lugar só aparece nas listas desse hotel.</div>
         </div>
+      </div>
+
+      <!-- Mode: partida + destino (dois lugares) -->
+      <div id="lieu-pair-wrap" class="form-grid" style="gap:12px;display:none">
+        <div class="fg" style="grid-column:1/-1;padding-top:2px;border-top:1px solid var(--border2);font-weight:700;font-size:13px">📍 Partida</div>
+        <div class="fg"><label>Ponto de partida *</label><input type="text" id="lieu-pair-dep-nom" placeholder="Ex.: Lisbon Airport"></div>
+        <div class="fg"><label>Morada da partida (opc.)</label><input type="text" id="lieu-pair-dep-addr" placeholder="Rua, nº, código postal…"></div>
+        <div class="fg" style="grid-column:1/-1;padding-top:4px;border-top:1px solid var(--border2);font-weight:700;font-size:13px">🏁 Destino</div>
+        <div class="fg"><label>Ponto de destino *</label><input type="text" id="lieu-pair-dest-nom" placeholder="Ex.: Cascais / Hotel…"></div>
+        <div class="fg"><label>Morada do destino (opc.)</label><input type="text" id="lieu-pair-dest-addr" placeholder="Rua, nº, código postal…"></div>
+        <div class="fg full-width" style="grid-column:1/-1"><label>Âmbito</label>
+          <select id="lieu-pair-agency">
+            <option value="">Geral (todos os hotéis)</option>
+          </select>
+          <div style="font-size:11px;color:var(--ts);margin-top:6px">Os dois lugares ficam com o mesmo âmbito (geral ou um hotel).</div>
+        </div>
+        <div class="fg"><label>Estado</label>
+          <select id="lieu-pair-actif"><option value="actif">✅ Ativo</option><option value="inactif">❌ Inativo</option></select>
+        </div>
+        <div class="fg"><label>Ordem</label><input type="number" id="lieu-pair-ordre" value="100" min="0" step="1"></div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-lieu')">Cancelar</button><button class="btn btn-navy" onclick="doSaveLieu()">💾 Guardar</button></div>
@@ -2074,7 +2171,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       </div>
 
       <div style="font-size:13px;font-weight:700;margin-bottom:8px">3. Colunas a incluir</div>
-      <div id="exp-cols" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px 12px;margin-bottom:8px;font-size:12px"></div>
+      <div id="exp-cols" style="margin-bottom:8px"></div>
       <div style="display:flex;gap:8px;margin-bottom:4px">
         <button type="button" class="btn btn-ghost btn-sm" onclick="setExportColsAll(true)">Todas</button>
         <button type="button" class="btn btn-ghost btn-sm" onclick="setExportColsAll(false)">Nenhuma</button>
@@ -3084,8 +3181,12 @@ const S={
   curTab:'reservas',
   // ── Portal Agence — Chauffeurs / Équipe / Historique (NOUVEAU) ──
   chauffeurs:[],equipe:[],curChauffeurId:null,curEquipeLogin:null,
-  hiPage:1,hiTotalPages:1
+  hiPage:1,hiTotalPages:1,
+  // Cache TTL navigation (évite rechargement API à chaque onglet)
+  _reservasAt:0,_agenciasAt:0,_pricesAt:0,_lieuxAt:0,_chauffeursAt:0,_equipeAt:0
 };
+const NAV_TTL={reservas:45000,agencias:120000,prices:120000,lieux:120000,chauffeurs:120000,equipe:120000};
+function navCacheFresh_(at,ttl){ return !!(at && (Date.now()-at)<ttl); }
 
 /* Session : le rafraîchissement de la page ne déconnecte pas ; déconnexion automatique après 3 h sans activité (bouton Déconnexion inchangé). */
 const HOTEL_SESSION_IDLE_MS = 3 * 60 * 60 * 1000;
@@ -3252,7 +3353,7 @@ function setLang(lang,zone){
   i18nPopulateFilters();
   i18nPatchAgencySelects();
   if(S.reservas.length>0) refreshStaffResaViews();
-  if(S.prices&&S.prices.length)loadPrices();
+  if(S.prices&&S.prices.length)loadPrices({renderUi:true});
   refreshEmailModalI18n();
   if(typeof applyEmailMailboxI18n==='function')applyEmailMailboxI18n();
 }
@@ -3451,20 +3552,27 @@ async function doConfirmerMDP(){
 // ═══════════════════════════════════════════════════════════
 // CHARGEMENT DONNÉES — OPTIMISÉ
 // ═══════════════════════════════════════════════════════════
-async function loadReservas(){
+async function loadReservas(opts){
+  opts=opts||{};
+  const force=!!opts.force;
+  if(!force && S.reservas.length && navCacheFresh_(S._reservasAt, NAV_TTL.reservas)){
+    refreshStaffResaViews();
+    return;
+  }
   const wrap=document.getElementById('tbl-wrap');
-  wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
-  document.getElementById('pagination').style.display='none';
+  if(wrap) wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
+  const pag=document.getElementById('pagination');
+  if(pag) pag.style.display='none';
   try{
-    // Cache-busting pour éviter les données stale
-    const d=await api({action:'getTodasReservacoes',adminToken:S.token,filtres:{},_t:Date.now()},{timeoutMs:45000});
+    const d=await api({action:'getTodasReservacoes',adminToken:S.token,filtres:{}},{timeoutMs:45000});
     if(!d.success){
       if(d.sessionExpired){doLogout();return;}
-      wrap.innerHTML=`<div class="empty"><div class="empty-icon">${d.iframeError?'🔌':'⚠️'}</div><div class="empty-title">${d.iframeError?'Connexion bloquée':'Erreur'}</div><div class="empty-sub">${d.error||'Erreur inconnue'}</div></div>`;
+      if(wrap) wrap.innerHTML=`<div class="empty"><div class="empty-icon">${d.iframeError?'🔌':'⚠️'}</div><div class="empty-title">${d.iframeError?'Connexion bloquée':'Erreur'}</div><div class="empty-sub">${d.error||'Erreur inconnue'}</div></div>`;
       return;
     }
     S.reservas=d.reservations||[];S.page=1;S.selectedIds.clear();updateBulkBar();
-    // Mise à jour stats en une passe
+    S._reservasAt=Date.now();
+    S._upcomingCache=null;
     const s=d.stats||{};
     const statsMap={total:s.total,pend:s.pendentes,conf:s.confirmadas,canc:s.canceladas,real:s.realizadas};
     Object.entries(statsMap).forEach(([k,v])=>{
@@ -3476,16 +3584,20 @@ async function loadReservas(){
     if(nbNav){const n=s.pendentes||0;nbNav.textContent=n;nbNav.style.display=n>0?'inline-flex':'none';}
     refreshStaffResaViews();
   }catch(e){
-    wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">${t().errConn}</div><div class="empty-sub">${e.message}</div></div>`;
+    if(wrap) wrap.innerHTML=`<div class="empty"><div class="empty-icon">🔌</div><div class="empty-title">${t().errConn}</div><div class="empty-sub">${e.message}</div></div>`;
   }
 }
 
-async function loadAgencias(){
+async function loadAgencias(opts){
+  opts=opts||{};
+  const force=!!opts.force;
+  if(!force && S.agencias.length && navCacheFresh_(S._agenciasAt, NAV_TTL.agencias)) return;
   try{
-    const d=await api({action:'getListaAgencias',adminToken:S.token,_t:Date.now()});
+    const d=await api({action:'getListaAgencias',adminToken:S.token});
     if(!d.success)return;
     S.agencias=d.agencias||[];
     S.permissions=d.permissions||S.permissions||{};
+    S._agenciasAt=Date.now();
     // Mise à jour tous les selects en une passe
     const selects=['f-ag','b-ag','cr-ag','ef-agence','as-agence','hi-ag'];
     const o=t();
@@ -3502,6 +3614,7 @@ async function loadAgencias(){
         if(prev)sel.value=prev;
         return;
       }
+      const prev=sel.value;
       sel.innerHTML=isFilter?`<option value="">${o.fAgFilterAll}</option>`:`<option value="">${o.agNonAttrib}</option>`;
       if(!isFilter && id!=='as-agence'){
         const opd=document.createElement('option');opd.value='__AGENCE__';opd.textContent='🏠 Serviço próprio (sem hotel)';sel.appendChild(opd);
@@ -3509,14 +3622,20 @@ async function loadAgencias(){
       S.agencias.forEach(a=>{
         const op=document.createElement('option');op.value=a.id;op.textContent=a.id+' — '+a.nom;sel.appendChild(op);
       });
+      if(prev) sel.value=prev;
     });
   }catch(e){dbg('err','loadAgencias: '+e.message);}
 }
 
-async function loadAgenciasTab(){
+async function loadAgenciasTab(opts){
+  opts=opts||{};
+  const force=!!opts.force;
   const wrap=document.getElementById('ag-wrap');
+  if(!force && S.agencias.length && navCacheFresh_(S._agenciasAt, NAV_TTL.agencias) && wrap && wrap.querySelector('table')){
+    return;
+  }
   wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
-  await loadAgencias();
+  await loadAgencias({force:true});
   if(!S.agencias.length){
     const _eo=t();wrap.innerHTML='<div class="empty"><div class="empty-icon">🏨</div><div class="empty-title">'+(_eo.agEmptyTitle||'Nenhum hotel')+'</div><div class="empty-sub">'+(_eo.agEmptySub||'Adicione um hotel via o botão ➕')+'</div></div>';
     return;
@@ -3570,18 +3689,27 @@ function agDisplayLabel(id){
 // ═══════════════════════════════════════════════════════════
 // CHAUFFEURS (NOUVEAU — Portal Agence)
 // ═══════════════════════════════════════════════════════════
-async function loadChauffeurs(){
+async function loadChauffeurs(opts){
+  opts=opts||{};
+  const force=!!opts.force;
+  if(!force && S.chauffeurs.length && navCacheFresh_(S._chauffeursAt, NAV_TTL.chauffeurs)) return;
   try{
-    const d=await api({action:'listerChauffeurs',adminToken:S.token,_t:Date.now()});
+    const d=await api({action:'listerChauffeurs',adminToken:S.token});
     if(!d.success)return;
     S.chauffeurs=d.chauffeurs||[];
+    S._chauffeursAt=Date.now();
   }catch(e){dbg('err','loadChauffeurs: '+e.message);}
 }
 
-async function loadChauffeursTab(){
+async function loadChauffeursTab(opts){
+  opts=opts||{};
+  const force=!!opts.force;
   const wrap=document.getElementById('ch-wrap');
+  if(!force && S.chauffeurs.length && navCacheFresh_(S._chauffeursAt, NAV_TTL.chauffeurs) && wrap && wrap.querySelector('table')){
+    return;
+  }
   wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
-  await loadChauffeurs();
+  await loadChauffeurs({force:true});
   if(!S.chauffeurs.length){
     wrap.innerHTML='<div class="empty"><div class="empty-icon">🚗</div><div class="empty-title">Nenhum motorista</div><div class="empty-sub">Adicionar via botão ➕</div></div>';
     return;
@@ -3650,7 +3778,8 @@ async function doSaveChauffeur(){
     if(d.success){
       toast('🚗 Motorista guardado','success');
       closeModal('ov-chauffeur');
-      loadChauffeursTab();
+      S._chauffeursAt=0;
+      loadChauffeursTab({force:true});
     }else{if(d.sessionExpired)doLogout();showMsgEl('ch-msg','❌ '+d.error,'error');}
   }catch(e){showMsgEl('ch-msg','❌ '+e.message,'error');}
 }
@@ -3665,13 +3794,19 @@ async function toggleChauffeurStatut(id,statut){
 // ═══════════════════════════════════════════════════════════
 // ÉQUIPE (NOUVEAU — annuaire léger Portal Agence)
 // ═══════════════════════════════════════════════════════════
-async function loadEquipeTab(){
+async function loadEquipeTab(opts){
+  opts=opts||{};
+  const force=!!opts.force;
   const wrap=document.getElementById('eq-wrap');
+  if(!force && S.equipe.length && navCacheFresh_(S._equipeAt, NAV_TTL.equipe) && wrap && wrap.querySelector('table')){
+    return;
+  }
   wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
   try{
-    const d=await api({action:'listerEquipe',adminToken:S.token,_t:Date.now()});
+    const d=await api({action:'listerEquipe',adminToken:S.token});
     if(!d.success){wrap.innerHTML=`<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Erro</div><div class="empty-sub">${d.error||''}</div></div>`;return;}
     S.equipe=d.membres||[];
+    S._equipeAt=Date.now();
     if(!S.equipe.length){
       wrap.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Nenhum membro</div><div class="empty-sub">Adicionar via botão ➕</div></div>';
       return;
@@ -3740,14 +3875,14 @@ async function doSaveEquipe(){
       statut:document.getElementById('eq-statut').value,
       notas:document.getElementById('eq-notas').value.trim()
     });
-    if(d.success){toast('👥 Membro guardado','success');closeModal('ov-equipe');loadEquipeTab();}
+    if(d.success){toast('👥 Membro guardado','success');closeModal('ov-equipe');loadEquipeTab({force:true});}
     else{if(d.sessionExpired)doLogout();showMsgEl('eq-msg','❌ '+d.error,'error');}
   }catch(e){showMsgEl('eq-msg','❌ '+e.message,'error');}
 }
 async function toggleEquipeStatut(login,statut){
   try{
     const d=await api({action:'salvarMembreEquipe',adminToken:S.token,login,statut,nome:S.equipe.find(x=>x.login===login)?.nome||login});
-    if(d.success){toast(statut==='actif'?'✅ Membro reativado':'🚫 Membro desativado','success');loadEquipeTab();}
+    if(d.success){toast(statut==='actif'?'✅ Membro reativado':'🚫 Membro desativado','success');loadEquipeTab({force:true});}
     else{if(d.sessionExpired)doLogout();toast('❌ '+d.error,'error');}
   }catch(e){toast('❌ '+e.message,'error');}
 }
@@ -3854,6 +3989,7 @@ async function fetchLieuxList(opts){
       return false;
     }
     S.lieux=(d.lieux||[]).filter(l=>!/agence\s*ruelas/i.test(l.nom||''));
+    S._lieuxAt=Date.now();
     return true;
   }catch(e){
     dbg('err','fetchLieuxList: '+e.message);
@@ -3861,17 +3997,30 @@ async function fetchLieuxList(opts){
   }
 }
 
-async function loadLieuxForCreate(){
+async function loadLieuxForCreate(opts){
+  opts=opts||{};
+  const force=!!opts.force;
   // Tous les lieux (généraux + par hôtel) pour filtrer côté UI selon cr-ag
+  if(!force && S.lieux.length && navCacheFresh_(S._lieuxAt, NAV_TTL.lieux)){
+    ensureCreateLieuSelects();
+    const dep=document.getElementById('cr-depart');
+    if(dep && (!dep.value || dep.options.length<=2)) onOrigChange();
+    return;
+  }
   await fetchLieuxList({filterAgencyId:''});
   ensureCreateLieuSelects();
   onOrigChange();
 }
 
-async function loadLieuxTab(){
+async function loadLieuxTab(opts){
+  opts=opts||{};
+  const force=!!opts.force;
   const wrap=document.getElementById('lieux-wrap');
   if(!wrap) return;
   fillHotelSelectOptions_('lieux-filter-hotel');
+  if(!force && S.lieux.length && navCacheFresh_(S._lieuxAt, NAV_TTL.lieux) && wrap.querySelector('table')){
+    return;
+  }
   wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
   const ok=await fetchLieuxList();
   if(!ok){
@@ -3914,13 +4063,54 @@ async function loadLieuxTab(){
 
 function fillLieuAgencySelect_(selected){
   fillHotelSelectOptions_('lieu-agency', true);
+  fillHotelSelectOptions_('lieu-pair-agency', true);
   const sel=document.getElementById('lieu-agency');
   if(sel&&selected!=null) sel.value=selected||'';
+  const sel2=document.getElementById('lieu-pair-agency');
+  if(sel2&&selected!=null) sel2.value=selected||'';
 }
 function onLieuAgencyChange(){}
 
+function onLieuTypeChange(){
+  const t=document.getElementById('lieu-type')?.value||'ambos';
+  const lab=document.getElementById('lbl-lieu-adresse');
+  const hint=document.getElementById('lieu-addr-hint');
+  const inp=document.getElementById('lieu-adresse');
+  if(t==='depart'){
+    if(lab) lab.textContent='Morada da partida (opcional)';
+    if(inp) inp.placeholder='Morada deste ponto de partida…';
+    if(hint) hint.textContent='Aparece só na lista de Partida. A morada é pré-preenchida ao escolher este lugar.';
+  }else if(t==='arrivee'){
+    if(lab) lab.textContent='Morada do destino (opcional)';
+    if(inp) inp.placeholder='Morada deste ponto de destino…';
+    if(hint) hint.textContent='Aparece só na lista de Destino. A morada é pré-preenchida ao escolher este lugar.';
+  }else{
+    if(lab) lab.textContent='Morada (opcional) — partida e destino';
+    if(inp) inp.placeholder='Morada deste lugar (válida para partida e destino)…';
+    if(hint) hint.textContent='O mesmo nome e a mesma morada ficam disponíveis como Partida e como Destino.';
+  }
+}
+
+function syncLieuModeUi(){
+  const mode=document.querySelector('input[name="lieu-mode"]:checked')?.value||'single';
+  const single=document.getElementById('lieu-single-wrap');
+  const pair=document.getElementById('lieu-pair-wrap');
+  if(single) single.style.display=mode==='single'?'grid':'none';
+  if(pair) pair.style.display=mode==='pair'?'grid':'none';
+  if(mode==='single') onLieuTypeChange();
+}
+
+function resetLieuPairFields_(){
+  ['lieu-pair-dep-nom','lieu-pair-dep-addr','lieu-pair-dest-nom','lieu-pair-dest-addr'].forEach(id=>{
+    const e=document.getElementById(id); if(e) e.value='';
+  });
+  const a=document.getElementById('lieu-pair-actif'); if(a) a.value='actif';
+  const o=document.getElementById('lieu-pair-ordre'); if(o) o.value='100';
+}
+
 function openAddLieuModal(){
   document.getElementById('lbl-lieu-modal-ttl').textContent='➕ Adicionar lugar';
+  document.getElementById('lbl-lieu-modal-sub').textContent='Lugar geral (todos os hotéis) — Partida e/ou Destino com morada';
   document.getElementById('lieu-msg').className='modal-msg';
   document.getElementById('lieu-id').value='';
   document.getElementById('lieu-nom').value='';
@@ -3928,7 +4118,17 @@ function openAddLieuModal(){
   document.getElementById('lieu-actif').value='actif';
   document.getElementById('lieu-ordre').value='100';
   document.getElementById('lieu-adresse').value='';
+  resetLieuPairFields_();
   fillLieuAgencySelect_('');
+  const modeWrap=document.getElementById('lieu-mode-wrap');
+  if(modeWrap) modeWrap.style.display='grid';
+  const pairLab=document.getElementById('lieu-mode-pair-label');
+  if(pairLab) pairLab.style.display='';
+  document.querySelectorAll('input[name="lieu-mode"]').forEach(r=>{
+    r.disabled=false;
+    r.checked=r.value==='single';
+  });
+  syncLieuModeUi();
   openModal('ov-lieu');
 }
 
@@ -3936,6 +4136,7 @@ function openEditLieuModal(id){
   const l=(S.lieux||[]).find(x=>String(x.id)===String(id));
   if(!l) return;
   document.getElementById('lbl-lieu-modal-ttl').textContent='✏️ Editar lugar';
+  document.getElementById('lbl-lieu-modal-sub').textContent='Partida, destino ou ambos — com morada opcional';
   document.getElementById('lieu-msg').className='modal-msg';
   document.getElementById('lieu-id').value=l.id||'';
   document.getElementById('lieu-nom').value=l.nom||'';
@@ -3944,10 +4145,61 @@ function openEditLieuModal(id){
   document.getElementById('lieu-ordre').value=l.ordre!=null?l.ordre:100;
   document.getElementById('lieu-adresse').value=l.adresse||'';
   fillLieuAgencySelect_(l.agencyId||'');
+  // Em edição: só modo « um lugar »
+  document.querySelectorAll('input[name="lieu-mode"]').forEach(r=>{
+    r.checked=r.value==='single';
+    r.disabled=r.value==='pair';
+  });
+  const pairLab=document.getElementById('lieu-mode-pair-label');
+  if(pairLab) pairLab.style.display='none';
+  syncLieuModeUi();
   openModal('ov-lieu');
 }
 
+async function salvarLieuPayload_(lieu){
+  const d=await api({action:'salvarLieuERP',adminToken:S.token,lieu},{timeoutMs:45000});
+  if(d.sessionExpired) doLogout();
+  return d;
+}
+
 async function doSaveLieu(){
+  const mode=document.querySelector('input[name="lieu-mode"]:checked')?.value||'single';
+  const editing=!!document.getElementById('lieu-id').value.trim();
+
+  if(mode==='pair' && !editing){
+    const depNom=document.getElementById('lieu-pair-dep-nom').value.trim();
+    const destNom=document.getElementById('lieu-pair-dest-nom').value.trim();
+    if(!depNom){showMsgEl('lieu-msg','❌ Nome da partida obrigatório','error');return;}
+    if(!destNom){showMsgEl('lieu-msg','❌ Nome do destino obrigatório','error');return;}
+    if(/agence\s*ruelas/i.test(depNom)||/agence\s*ruelas/i.test(destNom)){
+      showMsgEl('lieu-msg','❌ « Agence Ruelas » não é um destino/partida válido','error');return;
+    }
+    const agencyId=document.getElementById('lieu-pair-agency')?.value||'';
+    const actif=document.getElementById('lieu-pair-actif')?.value||'actif';
+    const ordre=document.getElementById('lieu-pair-ordre')?.value||100;
+    try{
+      const r1=await salvarLieuPayload_({
+        nom:depNom,
+        type:'depart',
+        adresse:document.getElementById('lieu-pair-dep-addr').value.trim(),
+        actif, ordre, agencyId
+      });
+      if(!r1.success){showMsgEl('lieu-msg','❌ Partida: '+(r1.error||'Erro'),'error');return;}
+      const r2=await salvarLieuPayload_({
+        nom:destNom,
+        type:'arrivee',
+        adresse:document.getElementById('lieu-pair-dest-addr').value.trim(),
+        actif, ordre, agencyId
+      });
+      if(!r2.success){showMsgEl('lieu-msg','❌ Destino: '+(r2.error||'Erro'),'error');return;}
+      toast('📍 Partida + Destino guardados','success');
+      closeModal('ov-lieu');
+      await loadLieuxTab();
+      ensureCreateLieuSelects();
+    }catch(e){showMsgEl('lieu-msg','❌ '+e.message,'error');}
+    return;
+  }
+
   const nom=document.getElementById('lieu-nom').value.trim();
   if(!nom){showMsgEl('lieu-msg','❌ Nome obrigatório','error');return;}
   if(/agence\s*ruelas/i.test(nom)){showMsgEl('lieu-msg','❌ « Agence Ruelas » não é um destino/partida válido','error');return;}
@@ -3961,14 +4213,13 @@ async function doSaveLieu(){
     agencyId:document.getElementById('lieu-agency')?.value||''
   };
   try{
-    const d=await api({action:'salvarLieuERP',adminToken:S.token,lieu},{timeoutMs:45000});
+    const d=await salvarLieuPayload_(lieu);
     if(d.success){
       toast('📍 Lugar guardado','success');
       closeModal('ov-lieu');
       await loadLieuxTab();
       ensureCreateLieuSelects();
     }else{
-      if(d.sessionExpired) doLogout();
       showMsgEl('lieu-msg','❌ '+(d.error||'Erro'),'error');
     }
   }catch(e){showMsgEl('lieu-msg','❌ '+e.message,'error');}
@@ -4028,7 +4279,7 @@ async function doSaveTrajetHotel(){
       toast('🏨 Trajeto hotel guardado'+(trajet.prix?' (+ preço)':''),'success');
       closeModal('ov-trajet-hotel');
       await loadLieuxTab();
-      loadPrices();
+      loadPrices({force:true});
       ensureCreateLieuSelects();
     }else{
       if(d.sessionExpired) doLogout();
@@ -4037,19 +4288,36 @@ async function doSaveTrajetHotel(){
   }catch(e){showMsgEl('trajet-msg','❌ '+e.message,'error');}
 }
 
-async function loadPrices(){
+async function loadPrices(opts){
+  opts=opts||{};
+  const force=!!opts.force;
+  const renderUi=opts.renderUi!==false;
   const wrap=document.getElementById('pr-wrap');
   const L=t();
-  fillHotelSelectOptions_('pr-filter-hotel');
-  wrap.innerHTML=`<div class="loader"><div class="loader-ring"></div><p>${L.loadingTxt}</p></div>`;
+  if(renderUi) fillHotelSelectOptions_('pr-filter-hotel');
+  const filter=document.getElementById('pr-filter-hotel')?.value||'';
+  const cacheOk=!force && !filter && S.prices.length && navCacheFresh_(S._pricesAt, NAV_TTL.prices);
+  if(cacheOk){
+    if(renderUi && wrap && !wrap.querySelector('table') && S.prices.length){
+      // fall through to render from S.prices
+    }else if(renderUi && wrap && wrap.querySelector('table')){
+      return;
+    }else if(!renderUi){
+      return;
+    }
+  }
+  if(renderUi && wrap) wrap.innerHTML=`<div class="loader"><div class="loader-ring"></div><p>${L.loadingTxt}</p></div>`;
   try{
-    const filter=document.getElementById('pr-filter-hotel')?.value||'';
-    const payload={action:'getListaPrices',adminToken:S.token,_t:Date.now()};
-    if(filter) payload.filterAgencyId=filter;
-    const d=await api(payload);
-    if(!d.success)return;
-    S.prices=d.prices||[];
-    S._priceIndex=null;
+    if(!cacheOk){
+      const payload={action:'getListaPrices',adminToken:S.token};
+      if(filter) payload.filterAgencyId=filter;
+      const d=await api(payload);
+      if(!d.success)return;
+      S.prices=d.prices||[];
+      S._priceIndex=null;
+      if(!filter) S._pricesAt=Date.now();
+    }
+    if(!renderUi) return;
     if(!S.prices.length){
       wrap.innerHTML=`<div class="empty"><div class="empty-icon">💰</div><div class="empty-title">${L.prEmpty}</div></div>`;
       return;
@@ -4146,7 +4414,7 @@ async function doSavePrice(){
     if(d.success){
       toast('💰 Preço guardado','success');
       closeModal('ov-price');
-      loadPrices();
+      loadPrices({force:true});
     }else{
       if(d.sessionExpired) doLogout();
       showMsgEl('pr-msg','❌ '+(d.error||'Erro'),'error');
@@ -4159,7 +4427,7 @@ async function doDeletePrice(idx){
   if(!confirm('Eliminar este preço?'))return;
   try{
     const d=await api({action:'supprimerPrecoERP',adminToken:S.token,sheetRow:p.sheetRow},{timeoutMs:45000});
-    if(d.success){toast('🗑 Preço eliminado','success');loadPrices();}
+    if(d.success){toast('🗑 Preço eliminado','success');loadPrices({force:true});}
     else{if(d.sessionExpired)doLogout();toast('❌ '+(d.error||'Erro'),'error');}
   }catch(e){toast('❌ '+e.message,'error');}
 }
@@ -4750,6 +5018,7 @@ function copyResaToCreateForm(r){
   const com=(r.commentaires||'').trim();
   set('cr-com',com?com+'\n(ref. '+r.id+')':'(ref. '+r.id+')');
   autoPrix();
+  scheduleCrRouteMap();
   const sec=document.getElementById('section-create');
   if(sec)try{sec.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
 }
@@ -5457,6 +5726,199 @@ async function doAssign(){
 }
 
 // ═══════════════════════════════════════════════════════════
+// ROUTE MAP — prévisualisation compacte Partida (A) / Destino (B)
+// ═══════════════════════════════════════════════════════════
+const ROUTE_MAP_LISBON=[38.7223,-9.1393];
+const _routeGeoCache=Object.create(null);
+const _routeMapInst={};
+
+function routeMapDivIcon_(letter,cls){
+  return L.divIcon({
+    className:'',
+    html:`<div class="route-map-marker ${cls}">${letter}</div>`,
+    iconSize:[22,22],
+    iconAnchor:[11,11],
+    popupAnchor:[0,-12]
+  });
+}
+
+function ensureRouteMap_(key,elId){
+  if(typeof L==='undefined') return null;
+  if(_routeMapInst[key]&&_routeMapInst[key].map) return _routeMapInst[key];
+  const el=document.getElementById(elId);
+  if(!el) return null;
+  const prevToken=(_routeMapInst[key]&&_routeMapInst[key]._token)||0;
+  const map=L.map(el,{
+    zoomControl:false,
+    attributionControl:true,
+    scrollWheelZoom:false,
+    dragging:true,
+    tap:true,
+    touchZoom:true,
+    doubleClickZoom:true,
+    boxZoom:false
+  });
+  L.control.zoom({position:'topright'}).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:18,
+    attribution:'© OSM'
+  }).addTo(map);
+  map.setView(ROUTE_MAP_LISBON,11);
+  _routeMapInst[key]={map,layer:L.layerGroup().addTo(map),elId,_token:prevToken};
+  setTimeout(()=>{try{map.invalidateSize();}catch(e){}},80);
+  return _routeMapInst[key];
+}
+
+async function geocodeRouteQuery_(q){
+  const query=String(q||'').trim();
+  if(!query||query.length<2) return null;
+  const key=query.toLowerCase();
+  if(_routeGeoCache[key]!==undefined) return _routeGeoCache[key];
+  try{
+    const url='https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=pt&q='+encodeURIComponent(query);
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok){_routeGeoCache[key]=null;return null;}
+    const data=await res.json();
+    if(!data||!data.length){_routeGeoCache[key]=null;return null;}
+    const hit={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon),label:data[0].display_name||query};
+    _routeGeoCache[key]=hit;
+    return hit;
+  }catch(e){
+    _routeGeoCache[key]=null;
+    return null;
+  }
+}
+
+function buildRouteGeoQuery_(name,addr){
+  const a=String(addr||'').trim();
+  const n=String(name||'').trim();
+  if(a) return /portugal|lisboa|lisbon|cascais|sintra/i.test(a)?a:(a+', Portugal');
+  if(n) return /portugal|lisboa|lisbon/i.test(n)?n:(n+', Portugal');
+  return '';
+}
+
+async function refreshRouteMap_(opts){
+  if(opts && opts._skip){
+    const inst=_routeMapInst[opts.key];
+    if(inst&&inst.map) setTimeout(()=>{try{inst.map.invalidateSize();}catch(e){}},40);
+    return;
+  }
+  const key=opts.key;
+  const statusEl=document.getElementById(opts.statusId);
+  const inst=ensureRouteMap_(key,opts.mapId);
+  if(!inst){
+    if(statusEl) statusEl.textContent='Mapa indisponível';
+    return;
+  }
+  const depQ=buildRouteGeoQuery_(opts.depName,opts.depAddr);
+  const destQ=buildRouteGeoQuery_(opts.destName,opts.destAddr);
+  if(statusEl){
+    if(!depQ&&!destQ) statusEl.textContent='Selecione partida / destino';
+    else statusEl.textContent='A localizar…';
+  }
+  const [depHit,destHit]=await Promise.all([
+    depQ?geocodeRouteQuery_(depQ):Promise.resolve(null),
+    destQ?geocodeRouteQuery_(destQ):Promise.resolve(null)
+  ]);
+  // Ignore stale updates
+  if(opts.token!=null && opts.token!==_routeMapInst[key]._token) return;
+  inst.layer.clearLayers();
+  const pts=[];
+  if(depHit){
+    const m=L.marker([depHit.lat,depHit.lng],{icon:routeMapDivIcon_('A','a'),title:opts.depName||'Partida'});
+    m.bindPopup('<strong>A · Partida</strong><br>'+escHtml(opts.depName||'')+(opts.depAddr?'<br><span style="font-size:11px;color:#64748b">'+escHtml(opts.depAddr)+'</span>':''));
+    inst.layer.addLayer(m);
+    pts.push([depHit.lat,depHit.lng]);
+  }
+  if(destHit){
+    const m=L.marker([destHit.lat,destHit.lng],{icon:routeMapDivIcon_('B','b'),title:opts.destName||'Destino'});
+    m.bindPopup('<strong>B · Destino</strong><br>'+escHtml(opts.destName||'')+(opts.destAddr?'<br><span style="font-size:11px;color:#64748b">'+escHtml(opts.destAddr)+'</span>':''));
+    inst.layer.addLayer(m);
+    pts.push([destHit.lat,destHit.lng]);
+  }
+  if(pts.length===2){
+    inst.layer.addLayer(L.polyline(pts,{color:'#0D2137',weight:2.5,opacity:.75,dashArray:'6 5'}));
+    try{inst.map.fitBounds(L.latLngBounds(pts).pad(0.28));}catch(e){}
+    if(statusEl) statusEl.textContent=(opts.depName||'A')+' → '+(opts.destName||'B');
+  }else if(pts.length===1){
+    inst.map.setView(pts[0],13);
+    if(statusEl) statusEl.textContent=depHit?(opts.depName||'Partida'):(opts.destName||'Destino');
+  }else{
+    inst.map.setView(ROUTE_MAP_LISBON,11);
+    if(statusEl){
+      if(depQ||destQ) statusEl.textContent='Localização não encontrada';
+      else statusEl.textContent='Selecione partida / destino';
+    }
+  }
+  setTimeout(()=>{try{inst.map.invalidateSize();}catch(e){}},60);
+}
+
+function scheduleRouteMapRefresh_(stateKey,builder){
+  const bucket=_routeMapInst._sched=_routeMapInst._sched||{};
+  clearTimeout(bucket[stateKey]);
+  bucket[stateKey]=setTimeout(()=>{
+    const opts=builder();
+    if(!_routeMapInst[opts.key]) _routeMapInst[opts.key]={};
+    _routeMapInst[opts.key]._token=(_routeMapInst[opts.key]._token||0)+1;
+    opts.token=_routeMapInst[opts.key]._token;
+    refreshRouteMap_(opts);
+  },450);
+}
+
+function getCrRoutePoint_(which){
+  const isDep=which==='depart';
+  const name=getCrLieuValue(which);
+  const addrEl=document.getElementById(isDep?'cr-addr-dep':'cr-addr-dest');
+  let addr=(addrEl&&addrEl.value||'').trim();
+  if(!addr){
+    const sel=document.getElementById(isDep?'cr-depart':'cr-dest');
+    const opt=sel&&sel.selectedOptions&&sel.selectedOptions[0];
+    if(opt&&sel.value&&sel.value!=='__custom__') addr=(opt.getAttribute('data-adresse')||'').trim();
+  }
+  return {name,addr};
+}
+
+function scheduleCrRouteMap(){
+  scheduleRouteMapRefresh_('cr',()=>{
+    const dep=getCrRoutePoint_('depart');
+    const dest=getCrRoutePoint_('dest');
+    const key=[dep.name,dep.addr,dest.name,dest.addr].join('|');
+    if(key===S._lastCrRouteKey && _routeMapInst.cr && _routeMapInst.cr.map){
+      return {key:'cr',mapId:'cr-route-map',statusId:'cr-route-map-status',depName:dep.name,depAddr:dep.addr,destName:dest.name,destAddr:dest.addr,_skip:true};
+    }
+    S._lastCrRouteKey=key;
+    return {
+      key:'cr',
+      mapId:'cr-route-map',
+      statusId:'cr-route-map-status',
+      depName:dep.name,
+      depAddr:dep.addr,
+      destName:dest.name,
+      destAddr:dest.addr
+    };
+  });
+}
+function invalidateAllRouteMaps_(){
+  Object.keys(_routeMapInst).forEach(k=>{
+    if(k==='_sched') return;
+    const inst=_routeMapInst[k];
+    if(inst&&inst.map){ try{inst.map.invalidateSize();}catch(e){} }
+  });
+}
+(function bindRouteMapViewport_(){
+  let t;
+  const run=()=>{ clearTimeout(t); t=setTimeout(invalidateAllRouteMaps_,200); };
+  window.addEventListener('resize',run,{passive:true});
+  window.addEventListener('orientationchange',run,{passive:true});
+})();
+
+let _renderTableDebounce=null;
+function debounceRenderTable(){
+  clearTimeout(_renderTableDebounce);
+  _renderTableDebounce=setTimeout(()=>{ try{renderTable();}catch(e){} },180);
+}
+
+// ═══════════════════════════════════════════════════════════
 // CRÉER RÉSERVATION
 // ═══════════════════════════════════════════════════════════
 function onOrigChange(){
@@ -5553,6 +6015,7 @@ function onLieuSelectChange(which){
   if(!custom && addr && preAdr && !addr.value) addr.value=preAdr;
   if(optLbl) optLbl.textContent=custom?'* obrig.':' (opt.)';
   autoPrix();
+  scheduleCrRouteMap();
 }
 
 function getCrLieuValue(which){
@@ -5702,6 +6165,7 @@ function resetCreateForm(){
   document.getElementById('cr-statut').value='pendente';document.getElementById('cr-paiement').value='non_payé';
   document.getElementById('create-msg').className='modal-msg';document.getElementById('cr-prix-hint').textContent='';
   onOrigChange();
+  scheduleCrRouteMap();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6669,9 +7133,11 @@ async function doSaveAgence(){
 // ═══════════════════════════════════════════════════════════
 function refreshStaffResaViews(){
   S._searchIndex=null;
+  S._upcomingCache=null;
+  const up=getUpcomingReservas();
   updateUpcomingCounts();
   const elUp=document.getElementById('s-upcoming');
-  if(elUp) elUp.textContent=getUpcomingReservas().length;
+  if(elUp) elUp.textContent=up.length;
   renderTable();
   if(S.curTab==='upcoming') renderUpcoming();
 }
@@ -6688,8 +7154,9 @@ function parseDate(d){
 }
 
 function getUpcomingReservas(){
+  if(S._upcomingCache) return S._upcomingCache;
   const today=new Date();today.setHours(0,0,0,0);
-  return S.reservas
+  S._upcomingCache=S.reservas
     .filter(r=>r.statut!=='realizado'&&r.statut!=='cancelado')
     .filter(r=>{const d=parseDate(r.dateTransfer);return d&&d>=today;})
     .sort((a,b)=>{
@@ -6697,6 +7164,7 @@ function getUpcomingReservas(){
       if(da<db)return-1;if(da>db)return 1;
       return (a.heureTransfer||'').localeCompare(b.heureTransfer||'');
     });
+  return S._upcomingCache;
 }
 
 function updateUpcomingCounts(){
@@ -6852,6 +7320,7 @@ function toggleNavDrawer(){
 }
 
 function showTab(name){
+  const sameTab=S.curTab===name;
   S.curTab=name;
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -6868,7 +7337,20 @@ function showTab(name){
   else if(name==='chauffeurs')loadChauffeursTab();
   else if(name==='equipe')loadEquipeTab();
   else if(name==='prices')loadPrices();
-  else if(name==='create'){ loadPrices(); loadLieuxForCreate(); }
+  else if(name==='create'){
+    Promise.all([
+      loadPrices({renderUi:false}),
+      loadLieuxForCreate()
+    ]).then(()=>{
+      setTimeout(()=>{
+        try{
+          const inst=_routeMapInst.cr;
+          if(inst&&inst.map) inst.map.invalidateSize();
+          if(!sameTab) scheduleCrRouteMap();
+        }catch(e){}
+      },80);
+    });
+  }
   else if(name==='email'){showTab('reservas');return;}
   else if(name==='historique'){S.hiPage=1;loadHistoriqueTab();}
 }
