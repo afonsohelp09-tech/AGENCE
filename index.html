@@ -897,17 +897,17 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="card-hdr">
         <div class="card-ttl" id="lbl-card-ttl">Todas as Reservas</div>
         <div class="hdr-acts">
-          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
-          <button class="btn btn-ghost btn-sm" onclick="imprimerListe()">⬇ PDF</button>
-          <button class="btn btn-ghost btn-sm" onclick="exportExcel()">⬇ Excel</button>
-          <button class="btn btn-ghost btn-sm" onclick="imprimerListe()">🖨️</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal('csv')">⬇ CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal('pdf')">⬇ PDF</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal('excel')">⬇ Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="openExportModal('pdf')">🖨️</button>
           <button class="btn btn-navy btn-sm" onclick="loadReservas()">↻ <span id="lbl-refresh-txt">Atualizar</span></button>
         </div>
       </div>
       <!-- BULK BAR -->
       <div class="bulk-bar" id="bulk-bar">
         <div class="bulk-count"><span id="bulk-nb">0</span> <span id="lbl-bulk-sel">selecionada(s)</span></div>
-        <button class="btn btn-white btn-sm" onclick="bulkEmail()">✉️ <span id="lbl-bulk-email">Enviar Email</span></button>
+        <button class="btn btn-white btn-sm" onclick="bulkEmail()" id="btn-bulk-email" style="display:none" title="Contact client hors app (hôtel)">✉️ <span id="lbl-bulk-email">Enviar Email</span></button>
         <button class="btn btn-white btn-sm" onclick="bulkAction('confirmado','Confirmer')">✅ <span id="lbl-bulk-conf">Confirmar</span></button>
         <button class="btn btn-white btn-sm" onclick="bulkAction('realizado','Marquer réalisée')">🏁 <span id="lbl-bulk-real">Realizado</span></button>
         <button class="btn btn-white btn-sm" onclick="bulkPago()">💶 <span id="lbl-bulk-pago">Marcar Pago</span></button>
@@ -1033,7 +1033,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="sec-sep" id="lbl-sec-gestion">⚙️ Gestion</div>
         <div class="form-grid" style="margin-bottom:14px">
           <div class="fg"><label id="lbl-cr-statut">Statut initial</label><select id="cr-statut"><option value="pendente">⏳ Pendente</option><option value="confirmado">✅ Confirmado</option></select></div>
-          <div class="fg"><label id="lbl-cr-agency">Agence</label><select id="cr-ag" onchange="onOrigChange()"><option value="">— Non attribuée —</option></select></div>
+          <div class="fg"><label id="lbl-cr-agency">Agence</label><select id="cr-ag" onchange="ensureCreateLieuSelects();autoPrix();onOrigChange()"><option value="">— Non attribuée —</option></select></div>
           <div class="fg"><label id="lbl-cr-prix">Prix Final (€)</label><input type="number" id="cr-prix" min="0" step="0.01" placeholder="35.00"><div class="hint" id="cr-prix-hint"></div></div>
           <div class="fg"><label id="lbl-cr-pay">Paiement</label><select id="cr-paiement"><option value="non_payé">Non payé</option><option value="payé">Payé</option></select></div>
           <div class="fg full"><label id="lbl-cr-com">Commentaires</label><textarea id="cr-com" placeholder="Informations supplémentaires…"></textarea></div>
@@ -1086,7 +1086,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)" id="lbl-ag-info">
-        ⚙️ Crie hotéis (nome, ID + palavra-passe de login). O login atual aparece sempre abaixo — só a Agência pode alterá-lo. Clique em ✏️ para editar.
+        ⚙️ Crie hotéis (nome, ID + palavra-passe). A palavra-passe fica mascarada — clique em 👁 para ver (acesso completo Agence). O hotel pode recuperá-la só pelo email da ficha.
       
       </div>
       <div class="tbl-wrap" id="ag-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
@@ -1099,12 +1099,20 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="card-hdr">
         <div class="card-ttl" id="lbl-lieux-ttl">📍 Lugares — Partidas & Destinos</div>
         <div class="hdr-acts">
-          <button class="btn btn-gold btn-sm" onclick="openAddLieuModal()">➕ <span id="lbl-lieux-add">Adicionar lugar</span></button>
+          <button class="btn btn-ghost btn-sm" onclick="openAddLieuModal()">➕ <span id="lbl-lieux-add">Lugar geral</span></button>
+          <button class="btn btn-gold btn-sm" onclick="openAddTrajetHotelModal()">🏨 <span id="lbl-lieux-trajet">Trajeto hotel</span></button>
           <button class="btn btn-ghost btn-sm" onclick="loadLieuxTab()">↻</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--info);background:var(--info-bg);border-bottom:1px solid var(--info-b)" id="lbl-lieux-info">
-        Configure partidas e destinos (morada opcional). Estes lugares aparecem nas listas das reservas. Cada hotel tem a sua própria morada na ficha do hotel.
+        Lugares gerais (todos) ou por hotel (só visíveis nesse hotel). « Trajeto hotel » cria partida + destino + preço opcional na mesma janela.
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border2)">
+        <label style="font-size:12px;font-weight:600">Filtrar</label>
+        <select id="lieux-filter-hotel" onchange="loadLieuxTab()" style="min-width:200px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px">
+          <option value="">Todos</option>
+          <option value="__GLOBAL__">Só gerais</option>
+        </select>
       </div>
       <div class="tbl-wrap" id="lieux-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
     </div>
@@ -1181,12 +1189,20 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="card-hdr">
                <div class="card-ttl" id="lbl-pr-ttl">💰 Tabela de Preços</div>
         <div class="hdr-acts">
+          <button class="btn btn-gold btn-sm" onclick="openAddPriceModal()">➕ Preço</button>
           <button class="btn btn-ghost btn-sm" onclick="loadPrices()">↻</button>
           <button class="btn btn-ghost btn-sm" onclick="exportPrixCSV()">⬇ CSV</button>
         </div>
       </div>
       <div style="padding:10px 16px;font-size:12px;color:var(--ts);background:var(--surface);border-bottom:1px solid var(--border2)" id="lbl-pr-hint">
-        Preços em consulta. Para alterações, contacte o suporte.
+        Edite a grelha de preços (geral ou por hotel). Os preços de um hotel só entram no cálculo automático desse hotel.
+      </div>
+      <div style="padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--border2)">
+        <label style="font-size:12px;font-weight:600">Filtrar</label>
+        <select id="pr-filter-hotel" onchange="loadPrices()" style="min-width:200px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px">
+          <option value="">Todos</option>
+          <option value="__GLOBAL__">Só gerais</option>
+        </select>
       </div>
       <div class="tbl-wrap" id="pr-wrap"><div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div></div>
     </div>
@@ -1639,8 +1655,8 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         </div>
       </div>
 
-      <!-- WA vers l'Agence — Staff envoie le message à l'agence pour qu'elle confirme -->
-      <div class="ag-wa-box" id="ag-wa-box" style="display:none">
+      <!-- WA hôtel (ancien flux « pedir confirmação ») — masqué : l'hôtel demande via WA ; l'agence confirme dans l'app -->
+      <div class="ag-wa-box" id="ag-wa-box" style="display:none" hidden aria-hidden="true">
         <div class="ag-wa-ttl">
           🏢 Confirmar com a Agência — WhatsApp
         </div>
@@ -1692,7 +1708,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <button class="btn btn-ghost btn-sm" id="btn-assign-detail" onclick="openAssignModal(S.curId)">🏢 Agência</button>
       <button class="btn btn-ghost btn-sm" onclick="openHistModal(S.curId)">📋 Histórico</button>
       <button class="btn btn-ghost btn-sm" onclick="doGeneratePDF()">📄 PDF</button>
-      <button class="btn btn-warn btn-sm" onclick="doSendEmailSingle()">✉️ Email</button>
+      <button class="btn btn-warn btn-sm" id="btn-email-client-detail" onclick="doSendEmailSingle()" style="display:none" title="Contact client hors application (hôtel)">✉️ Email cliente</button>
       <button class="btn btn-ghost btn-sm" id="btn-copy-nova" onclick="copyResaToCreateFromDetail()">📋 Copiar p/ nova reserva</button>
       <button class="btn btn-danger btn-sm" id="btn-cancel-detail" onclick="doCancelDetail()">❌ Anular</button>
       <button class="btn btn-success btn-sm" id="btn-realizado" onclick="doRealizadoDetail()">🏁 Realizado</button>
@@ -1760,7 +1776,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <div class="fg full-width" style="grid-column:1/-1">
         <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-weight:500">
           <input type="checkbox" id="as-email-notif" checked style="margin-top:3px;accent-color:var(--navy)">
-          <span><span id="lbl-as-email-notif">Notifier l'agence par email</span><br><span id="lbl-as-email-notif-hint" style="font-size:11px;color:var(--ts);font-weight:400;line-height:1.45">Email automatique après attribution (selon paramètre agence). Décochez pour ne pas envoyer.</span></span>
+          <span><span id="lbl-as-email-notif">Notifier l'hôtel par email</span><br><span id="lbl-as-email-notif-hint" style="font-size:11px;color:var(--ts);font-weight:400;line-height:1.45">Email automatique à l'hôtel après attribution (selon paramètre de la fiche). Décochez pour ne pas envoyer.</span></span>
         </label>
       </div>
     </div>
@@ -1841,15 +1857,22 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         <div class="fg"><label>ID Hotel *</label><input type="text" id="ag-new-id" placeholder="HOT001"></div>
         <div class="fg"><label>Nome do hotel *</label><input type="text" id="ag-new-nom" placeholder="Hotel Exemplo"></div>
         <div class="fg full-width" style="grid-column:1/-1"><label>Morada do hotel *</label><input type="text" id="ag-new-adresse" placeholder="Rua, nº, código postal, cidade…"></div>
-        <div class="fg"><label>Email hotel (reset MDP) *</label><input type="email" id="ag-new-email" placeholder="hotel@email.pt"></div>
-        <div class="fg"><label>Palavra-passe (login atual) *</label><input type="text" id="ag-new-pass" placeholder="ex.: hotel@2026" autocomplete="off"></div>
+        <div class="fg"><label>Email hotel (reset MDP) *</label><input type="email" id="ag-new-email" placeholder="hotel@email.pt"><div style="font-size:11px;color:var(--ts);margin-top:6px;line-height:1.45">O hotel só pode recuperar a palavra-passe via este email (código enviado automaticamente).</div></div>
+        <div class="fg">
+          <label>Palavra-passe (login atual) *</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="password" id="ag-new-pass" placeholder="••••••••" autocomplete="new-password" style="flex:1">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-ag-pass-toggle" onclick="toggleAgenceHotelPassField()" title="Mostrar / ocultar">👁</button>
+          </div>
+          <div style="font-size:11px;color:var(--ts);margin-top:6px;line-height:1.45">Visível só para a conta Agence com acesso completo (AGENCE_ADMIN). Clique em 👁 para revelar. O hotel também pode alterar via email acima.</div>
+        </div>
         <div class="fg full-width" style="grid-column:1/-1">
           <label>WhatsApp — número(s) e/ou grupo</label>
           <textarea id="ag-new-wa" rows="5" placeholder="+351912345678&#10;00351919876543&#10;https://chat.whatsapp.com/…" style="width:100%;min-height:88px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);font-family:inherit;font-size:13px;resize:vertical"></textarea>
           <div style="font-size:11px;color:var(--ts);margin-top:6px;line-height:1.45"><strong>Contacto directo:</strong> um número por linha (+351… ou 00351…). <strong>Grupo:</strong> numa linha à parte, cole só o link de convite <code style="font-size:10px">https://chat.whatsapp.com/XXXX</code> (no telemóvel: Grupo → Convidar → Copiar link). Não existe « número de grupo » — só este link abre o grupo. Vários números + link na mesma ficha: botões separados na reserva.</div>
         </div>
         <div class="fg"><label>WhatsApp ativo</label><select id="ag-new-use-wa"><option value="sim">✅ Sim</option><option value="nao">❌ Não</option></select></div>
-        <div class="fg"><label id="lbl-ag-email-notif">Email à l'attribution</label><select id="ag-new-email-notif"><option value="sim">✅ Oui — notifier par email</option><option value="nao">❌ Non — pas d'email auto</option></select></div>
+        <div class="fg"><label id="lbl-ag-email-notif">Email à chaque résa hôtel</label><select id="ag-new-email-notif"><option value="sim">✅ Oui — agence notifiée par email</option><option value="nao">❌ Non — pas d'email auto</option></select><div id="lbl-ag-email-notif-hint" style="font-size:11px;color:var(--ts);margin-top:6px;line-height:1.45">Si Oui : l'agence reçoit un email à chaque réservation créée par cet hôtel. Confirmation dans l'app (Agence). Contact client = hors app (hôtel).</div></div>
         <div class="fg"><label>Língua contacto</label><select id="ag-new-lang"><option value="PT">🇵🇹 PT</option><option value="EN">🇬🇧 EN</option><option value="FR">🇫🇷 FR</option><option value="ES">🇪🇸 ES</option></select></div>
         <div class="fg full-width" style="grid-column:1/-1">
           <label>Modo de pagamento (WhatsApp → hotel, textos e e-mails)</label>
@@ -1913,10 +1936,10 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
   </div>
 </div>
 
-<!-- MODAL LIEU -->
+<!-- MODAL LIEU (geral) -->
 <div class="overlay" id="ov-lieu" onclick="closeOv('ov-lieu',event)">
   <div class="modal">
-    <div class="modal-hdr"><div><div class="modal-ttl" id="lbl-lieu-modal-ttl">➕ Adicionar lugar</div><div class="modal-sub">Partida e/ou destino (morada opcional)</div></div><button class="modal-close" onclick="closeModal('ov-lieu')">✕</button></div>
+    <div class="modal-hdr"><div><div class="modal-ttl" id="lbl-lieu-modal-ttl">➕ Adicionar lugar</div><div class="modal-sub">Lugar geral (todos os hotéis) — morada opcional</div></div><button class="modal-close" onclick="closeModal('ov-lieu')">✕</button></div>
     <div class="modal-body">
       <div class="modal-msg" id="lieu-msg"></div>
       <input type="hidden" id="lieu-id" value="">
@@ -1934,9 +1957,134 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
         </div>
         <div class="fg"><label>Ordem</label><input type="number" id="lieu-ordre" value="100" min="0" step="1"></div>
         <div class="fg full-width" style="grid-column:1/-1"><label>Morada (opcional)</label><input type="text" id="lieu-adresse" placeholder="Rua, nº… — útil para o motorista"></div>
+        <div class="fg full-width" style="grid-column:1/-1"><label>Âmbito</label>
+          <select id="lieu-agency" onchange="onLieuAgencyChange()">
+            <option value="">Geral (todos)</option>
+          </select>
+          <div style="font-size:11px;color:var(--ts);margin-top:6px">Se escolher um hotel, este lugar só aparece nas listas desse hotel.</div>
+        </div>
       </div>
     </div>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-lieu')">Cancelar</button><button class="btn btn-navy" onclick="doSaveLieu()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL TRAJET HOTEL (partida + destino + preço) -->
+<div class="overlay" id="ov-trajet-hotel" onclick="closeOv('ov-trajet-hotel',event)">
+  <div class="modal wide">
+    <div class="modal-hdr"><div><div class="modal-ttl">🏨 Trajeto por hotel</div><div class="modal-sub">Partida + destino na mesma janela · preço opcional → tabela de preços</div></div><button class="modal-close" onclick="closeModal('ov-trajet-hotel')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-msg" id="trajet-msg"></div>
+      <div class="form-grid" style="gap:12px">
+        <div class="fg full-width" style="grid-column:1/-1"><label>Hotel *</label>
+          <select id="trajet-hotel" style="width:100%"><option value="">— Selecionar hotel —</option></select>
+        </div>
+        <div class="fg" style="grid-column:1/-1;padding-top:4px;border-top:1px solid var(--border2);font-weight:700;font-size:13px">📍 Partida</div>
+        <div class="fg"><label>Ponto de partida *</label><input type="text" id="trajet-dep-nom" placeholder="Ex.: Lisbon Airport"></div>
+        <div class="fg"><label>Morada partida (opc.)</label><input type="text" id="trajet-dep-addr" placeholder="Rua, nº…"></div>
+        <div class="fg" style="grid-column:1/-1;padding-top:4px;border-top:1px solid var(--border2);font-weight:700;font-size:13px">🏁 Destino</div>
+        <div class="fg"><label>Ponto de destino *</label><input type="text" id="trajet-dest-nom" placeholder="Ex.: Hotel Example"></div>
+        <div class="fg"><label>Morada destino (opc.)</label><input type="text" id="trajet-dest-addr" placeholder="Rua, nº…"></div>
+        <div class="fg" style="grid-column:1/-1;padding-top:4px;border-top:1px solid var(--border2);font-weight:700;font-size:13px">💶 Preço (opcional)</div>
+        <div class="fg"><label>Preço (€)</label><input type="number" id="trajet-prix" min="0" step="0.01" placeholder="Ex.: 35"></div>
+        <div class="fg"><label>Veículo</label><input type="text" id="trajet-veh" value="Sedan" placeholder="Sedan"></div>
+        <div class="fg"><label>Pax min</label><input type="number" id="trajet-pax-min" value="1" min="1"></div>
+        <div class="fg"><label>Pax max</label><input type="number" id="trajet-pax-max" value="99" min="1"></div>
+      </div>
+      <div style="font-size:11px;color:var(--ts);margin-top:10px;line-height:1.45">Este trajeto e o preço ficam ligados ao hotel escolhido — só visíveis / usados para esse hotel.</div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-trajet-hotel')">Cancelar</button><button class="btn btn-navy" onclick="doSaveTrajetHotel()">💾 Guardar trajeto</button></div>
+  </div>
+</div>
+
+<!-- MODAL PREÇO -->
+<div class="overlay" id="ov-price" onclick="closeOv('ov-price',event)">
+  <div class="modal">
+    <div class="modal-hdr"><div><div class="modal-ttl" id="pr-modal-ttl">➕ Adicionar preço</div><div class="modal-sub">Geral ou por hotel</div></div><button class="modal-close" onclick="closeModal('ov-price')">✕</button></div>
+    <div class="modal-body">
+      <div class="modal-msg" id="pr-msg"></div>
+      <input type="hidden" id="pr-sheet-row" value="">
+      <div class="form-grid" style="gap:12px">
+        <div class="fg"><label>De *</label><input type="text" id="pr-de" placeholder="Lisbon Airport"></div>
+        <div class="fg"><label>Para *</label><input type="text" id="pr-pour" placeholder="Cascais"></div>
+        <div class="fg"><label>Veículo</label><input type="text" id="pr-veh" value="Sedan"></div>
+        <div class="fg"><label>Preço (€) *</label><input type="number" id="pr-prix" min="0" step="0.01"></div>
+        <div class="fg"><label>Pax min</label><input type="number" id="pr-pax-min" value="1" min="1"></div>
+        <div class="fg"><label>Pax max</label><input type="number" id="pr-pax-max" value="99" min="1"></div>
+        <div class="fg full-width" style="grid-column:1/-1"><label>Âmbito</label>
+          <select id="pr-agency"><option value="">Geral (todos)</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('ov-price')">Cancelar</button><button class="btn btn-navy" onclick="doSavePrice()">💾 Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL EXPORT RAPPORT (Agence — choix du contenu) -->
+<div class="overlay" id="ov-export" onclick="closeOv('ov-export',event)">
+  <div class="modal wide">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-ttl" id="exp-modal-ttl">⬇ Exportar relatório</div>
+        <div class="modal-sub">Escolha o âmbito, o motorista e as colunas a incluir</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('ov-export')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-msg" id="exp-msg"></div>
+      <input type="hidden" id="exp-format" value="excel">
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">1. Fonte das reservas</div>
+      <div style="display:grid;gap:8px;margin-bottom:14px">
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px">
+          <input type="radio" name="exp-source" value="filtered" checked onchange="syncExportSourceUi()">
+          <span>Vista atual (filtros da tabela)</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px">
+          <input type="radio" name="exp-source" value="selected" id="exp-src-selected" onchange="syncExportSourceUi()">
+          <span>Só as selecionadas (<span id="exp-sel-count">0</span>)</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:13px">
+          <input type="radio" name="exp-source" value="custom" onchange="syncExportSourceUi()">
+          <span>Escolher âmbitos (hotéis / serviço próprio / não atribuídas)</span>
+        </label>
+      </div>
+
+      <div id="exp-custom-wrap" style="display:none;padding:12px;border:1px solid var(--border2);border-radius:var(--r);margin-bottom:14px;background:var(--surface)">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px">Âmbito</div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px;cursor:pointer">
+          <input type="checkbox" id="exp-scope-hotels" checked onchange="syncExportHotelsUi()"> Hotéis parceiros
+        </label>
+        <div id="exp-hotels-list" style="max-height:120px;overflow:auto;margin:0 0 10px 22px;display:grid;gap:4px;font-size:12px"></div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px;cursor:pointer">
+          <input type="checkbox" id="exp-scope-own" checked> Serviço próprio (agência)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="exp-scope-unassigned" checked> Não atribuídas (sem hotel)
+        </label>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">2. Motorista</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <select id="exp-chauffeur" style="min-width:220px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--r);font-size:13px">
+          <option value="all">Todos</option>
+          <option value="with">Só com motorista atribuído</option>
+          <option value="without">Só sem motorista</option>
+        </select>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">3. Colunas a incluir</div>
+      <div id="exp-cols" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px 12px;margin-bottom:8px;font-size:12px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setExportColsAll(true)">Todas</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="setExportColsAll(false)">Nenhuma</button>
+      </div>
+      <div style="font-size:11px;color:var(--ts);margin-top:8px" id="exp-preview-count">—</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('ov-export')">Cancelar</button>
+      <button class="btn btn-navy" onclick="doConfirmExport()">⬇ Descarregar</button>
+    </div>
   </div>
 </div>
 
@@ -2670,10 +2818,10 @@ const LBL={
 
 /* En-têtes & libellés tableaux / formulaires (fusionné dans t()) */
 const LBL_EXT={
-  FR:{sPend:'En attente',sConf:'Confirmées',sCanc:'Annulées',sReal:'Terminées',thRef:'Réf.',thClient:'Client',thDate:'Date',thTime:'Heure',thRoute:'Trajet',thPax:'Pax',thAgency:'Agence',thPrice:'Prix',thStatus:'Statut',thPayment:'Paiement',thActions:'Actions',emptyFiltered:'Aucune réservation ne correspond à ces filtres.',prThFrom:'De',prThTo:'Vers',prThVehicle:'Véhicule',prThPaxMin:'Pax min',prThPaxMax:'Pax max',prThPrice:'Prix (€)',prEmpty:'Aucun tarif configuré',loadingTxt:'Chargement…',fAll:'Tous',fStatPend:'⏳ En attente',fStatConf:'✅ Confirmé',fStatCanc:'❌ Annulé',fStatReal:'🏁 Terminé',fTypeAll:'Tous',fTypeAirport:'✈️ Aéroport → hôtel',fTypeHotel:'🏨 Hôtel → aéroport',fTypeTrain:'🚂 Train',fTypeBus:'🚌 Bus',fTypeHighspeed:'🚄 Haute vitesse',bilanEmptySub:'Sélectionnez une période et des filtres, puis cliquez sur « Calculer ».',fSearchPh:'ID, client, e-mail…',crOta:'N° OTA',crOtaHint:'Booking.com ou Expedia',crBags:'Bagages',crOrigType:'Type de transfert',crDepart:'Départ',crDest:'Destination',crAddrDep:'Adresse départ',crAddrDest:'Adresse destination',crOpt:'(opt.)',crDate:'Date',crHour:'Heure (24 h)',crVol:'N° de vol',crTransport:'N° transport',crHintTransport:'Train, bus ou ferry',crRoom:'N° de chambre',crStatutLab:'Statut initial',crAgency:'Agence',crPrixLab:'Prix final (€)',crPayLab:'Paiement',crComLab:'Commentaires',crComPh:'Informations complémentaires…',payNon:'Non payé',payOui:'Payé',agNonAttrib:'— Sans agence —',crStatPend:'⏳ En attente',crStatConf:'✅ Confirmé',hdrClear:'Vider',lblAgInfo:'⚙️ Créez des hôtels (nom, ID + mot de passe). Le login actuel reste toujours visible ici — seule l\'Agence le change.',lblPrHint:'Tarifs en consultation. Pour toute modification, contactez le support.',paidYes:'Payé',prixAutoOk:'✓ Tarif suggéré : ',prixAutoNone:'Aucun tarif automatique pour ce trajet.',bAgency:'Agence',bStat:'Statut',bType:'Type de transfert',btnCalc:'📊 Calculer',btnSave:'💾 Enregistrer',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Choisir la langue — Transfer IN/OUT détecté automatiquement',emailModalTtl:'✉️ Email de confirmation multilingue',emailLangLbl:'Langue de l\'email',emailLangHint:'Liste déroulante : la langue choisie met à jour l\'aperçu du corps d\'email ci-dessous (identique à l\'envoi).',emailAirportStrong:'Transfer IN détecté',emailAirportDesc:'Le point de rencontre aéroport sera inclus dans l\'email envoyé au client.',emDirIn:'📥 Transfer IN (depuis aéroport) : {n} réservation(s)\n   → Email d\'accueil + note de rencontre aéroport',emDirOut:'📤 Transfer OUT (départ hôtel) : {n} réservation(s)\n   → Email de bon voyage',emDirOther:'🚂 Autre type : {n} réservation(s)',emailPayTtl:'Mode de paiement — email client',emailPayIncl:'Inclure le mode de paiement dans l\'email au client (ligne dans le tableau des détails — optionnel, identique à l\'envoi)',emailPayModeLbl:'Mode',emailPayOff:'—',emailPaySheet:'Fiche agence (méthode enregistrée)',emailPayDriver:'Espèces au chauffeur',emailPayReception:'Espèces à la réception hôtel',emailPayCustom:'Texte personnalisé',emailPayCustomPh:'Texte libre (affiché tel quel)',emailPreviewTtl:'Aperçu de l\'email',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Fermer',emailBtnPreview:'👁 Aperçu',emailBtnSend:'✉️ Envoyer email(s)',emailThDetail:'Détail',emailThInfo:'Information',previewToast:'Aperçu mis à jour',emNoResa:'Aucune réservation',emSendResult:'✅ {ok} email(s) envoyé(s){err}',emSendErrPart:' · ❌ {n} erreur(s)',emSendToast:'✉️ {ok}/{total} emails envoyés',bulkEmailNeedSel:'Sélectionner au moins une réservation',staffLockPast:'Jour du transfert atteint ou passé : modification, annulation et changement d\'agence ne sont plus possibles.',staffRealFuture:'« Réalisé » est disponible uniquement à partir du jour du transfert.',staffCopyNewOk:'Formulaire prérempli — saisissez la nouvelle date et l\'heure.',staffAddComment:'Ajouter commentaire',staffBtnEdit:'Éditer',staffCommentPrevLbl:'Commentaires existants (non modifiables)',staffCommentNone:'Aucun commentaire existant.',staffCommentAddPh:'Nouveau commentaire uniquement…',staffCommentNeed:'Saisissez un commentaire à ajouter.',staffCommentSaved:'Commentaire ajouté.',fAgFilterAll:'Toutes',expPrint:'🖨️ Imprimer',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Comment lire ce bilan',bilanHelpText:'1) Période, type de bilan (synthèse ou détail clients) et filtres. 2) Calculer. 3) Exporter en Excel, PDF ou Imprimer. Synthèse = agrégats ; Détail = une ligne par client (nom, prix, destination, montant payé).',bilanExportHint:'Exports disponibles après calcul :',bilanReportTitle:'Bilan des transferts — Agence Ruelas',bilanPeriod:'Période',bilanFilters:'Filtres appliqués',bilanGenerated:'Généré le',bilanAllPeriod:'Toute période',bilanLegendTitle:'Légende des indicateurs',bilanLegCA:'Chiffre d\'affaires',bilanLegCADesc:'Montant total des réservations confirmées et réalisées (€).',bilanLegPaid:'Encaissé',bilanLegPaidDesc:'Montant déjà payé par les clients.',bilanLegLost:'Perdu (annulé)',bilanLegLostDesc:'Valeur des réservations annulées sur la période.',bilanLegAvg:'Prix moyen',bilanLegAvgDesc:'Prix moyen par réservation comptabilisée.',bilanSecSummary:'Synthèse générale',bilanSecFinance:'Finances',bilanSecStatus:'Répartition par statut',bilanSecMonth:'Par mois',bilanSecAgency:'Par agence',bilanSecDest:'Top destinations',bilanSecType:'Par type de transfert',bilanThIndicator:'Indicateur',bilanThValue:'Valeur',bilanThExplanation:'Explication',bilanThMonth:'Mois',bilanThRes:'Réservations',bilanThReal:'Réalisées',bilanThAgency:'Agence',bilanThShare:'Part du CA',bilanThDest:'Destination',bilanThType:'Type',bilanNeedCalc:'Calculez le bilan d\'abord',bilanModeLab:'Type de bilan',bilanModeSynth:'📊 Synthèse (agrégats)',bilanModeDetail:'📋 Détail par client',bilanSecDetail:'Liste des réservations',bilanDetailHint:'Une ligne par réservation : client, prix, destination et montant payé.',bilanThPaidAmt:'Montant payé',bilanPdfHint:'Utilisez « Enregistrer au format PDF » dans la boîte d\'impression.',workBgTitle:'Couleur de fond',workBgHint:'Confort visuel pendant votre session. Réinitialisé à la déconnexion.',workBgReset:'Par défaut',agEmailNotifLab:"Email à l'attribution",agEmailNotifSim:'Oui — notifier par email',agEmailNotifNao:'Non — pas d\'email auto',asEmailNotifLab:"Notifier l'agence par email",asEmailNotifHint:'Email automatique après attribution (selon paramètre agence). Décochez pour ne pas envoyer.'},
-  PT:{sPend:'Pendentes',sConf:'Confirmadas',sCanc:'Canceladas',sReal:'Realizadas',thRef:'Ref.',thClient:'Cliente',thDate:'Data',thTime:'Hora',thRoute:'Trajeto',thPax:'Pax',thAgency:'Agência',thPrice:'Preço',thStatus:'Estado',thPayment:'Pagamento',thActions:'Ações',emptyFiltered:'Nenhuma reserva corresponde a estes filtros.',prThFrom:'De',prThTo:'Para',prThVehicle:'Veículo',prThPaxMin:'Pax mín',prThPaxMax:'Pax máx',prThPrice:'Preço (€)',prEmpty:'Nenhum preço configurado',loadingTxt:'A carregar…',fAll:'Todos',fStatPend:'⏳ Pendente',fStatConf:'✅ Confirmado',fStatCanc:'❌ Cancelado',fStatReal:'🏁 Realizado',fTypeAll:'Todos',fTypeAirport:'✈️ Aeroporto → hotel',fTypeHotel:'🏨 Hotel → aeroporto',fTypeTrain:'🚂 Comboio',fTypeBus:'🚌 Autocarro',fTypeHighspeed:'🚄 Alta velocidade',bilanEmptySub:'Escolha um período e filtros e clique em « Calcular ».',fSearchPh:'ID, cliente, e-mail…',crOta:'N° OTA',crOtaHint:'Booking.com ou Expedia',crBags:'Bagagens',crOrigType:'Tipo de transfer',crDepart:'Partida',crDest:'Destino',crAddrDep:'Morada partida',crAddrDest:'Morada destino',crOpt:'(opc.)',crDate:'Data',crHour:'Hora (24 h)',crVol:'N° voo',crTransport:'N° transporte',crHintTransport:'Comboio, autocarro ou ferry',crRoom:'N° quarto',crStatutLab:'Estado inicial',crAgency:'Agência',crPrixLab:'Preço final (€)',crPayLab:'Pagamento',crComLab:'Comentários',crComPh:'Informações adicionais…',payNon:'Não pago',payOui:'Pago',agNonAttrib:'— Sem agência —',crStatPend:'⏳ Pendente',crStatConf:'✅ Confirmado',hdrClear:'Limpar',lblAgInfo:'⚙️ Crie hotéis (nome, ID + palavra-passe de login). O login atual aparece sempre abaixo — só a Agência pode alterá-lo. Clique em ✏️ para editar.',lblPrHint:'Preços em consulta. Para alterações, contacte o suporte.',paidYes:'Pago',prixAutoOk:'✓ Preço sugerido: ',prixAutoNone:'Nenhum preço automático para este trajeto.',bAgency:'Agência',bStat:'Estado',bType:'Tipo de transfer',btnCalc:'📊 Calcular',btnSave:'💾 Guardar',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Escolha o idioma — Transfer IN/OUT detetado automaticamente',emailModalTtl:'✉️ Email de confirmação multilingue',emailLangLbl:'Idioma do email',emailLangHint:'Menu pendente: o idioma escolhido atualiza a pré-visualização do corpo abaixo (igual ao envio).',emailAirportStrong:'Transfer IN detetado',emailAirportDesc:'O ponto de encontro no aeroporto será incluído no email enviado ao cliente.',emDirIn:'📥 Transfer IN (desde aeroporto): {n} reserva(s)\n   → Email de boas-vindas + nota de encontro no aeroporto',emDirOut:'📤 Transfer OUT (saída do hotel): {n} reserva(s)\n   → Email de boa viagem',emDirOther:'🚂 Outro tipo: {n} reserva(s)',emailPayTtl:'Modo de pagamento — email ao cliente',emailPayIncl:'Incluir o modo de pagamento no email ao cliente (linha na tabela de detalhes — opcional, igual ao envio)',emailPayModeLbl:'Modo',emailPayOff:'—',emailPaySheet:'Ficha agência (método registado)',emailPayDriver:'Numerário ao motorista',emailPayReception:'Numerário na receção do hotel',emailPayCustom:'Texto personalizado',emailPayCustomPh:'Texto livre (mostrado tal como está)',emailPreviewTtl:'Pré-visualização do email',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Fechar',emailBtnPreview:'👁 Pré-visualizar',emailBtnSend:'✉️ Enviar email(s)',emailThDetail:'Detalhe',emailThInfo:'Informação',previewToast:'Pré-visualização atualizada',emNoResa:'Nenhuma reserva',emSendResult:'✅ {ok} email(s) enviado(s){err}',emSendErrPart:' · ❌ {n} erro(s)',emSendToast:'✉️ {ok}/{total} emails enviados',bulkEmailNeedSel:'Selecione pelo menos uma reserva',staffLockPast:'Dia do transfer igual ou ultrapassado: não é possível editar, anular ou alterar a agência.',staffRealFuture:'« Realizado » só a partir do dia do transfer.',staffCopyNewOk:'Formulário preenchido — indique nova data e hora.',staffAddComment:'Adicionar comentário',staffBtnEdit:'Editar',staffCommentPrevLbl:'Comentários existentes (não editáveis)',staffCommentNone:'Nenhum comentário existente.',staffCommentAddPh:'Novo comentário apenas…',staffCommentNeed:'Introduza um comentário a adicionar.',staffCommentSaved:'Comentário adicionado.',fAgFilterAll:'Todas',expPrint:'🖨️ Imprimir',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Como ler este balanço',bilanHelpText:'1) Período, tipo de balanço (síntese ou detalhe por cliente) e filtros. 2) Calcular. 3) Exportar Excel, PDF ou Imprimir. Síntese = agregados ; Detalhe = uma linha por cliente (nome, preço, destino, valor pago).',bilanExportHint:'Exportações disponíveis após cálculo:',bilanReportTitle:'Balanço de transfers — Agence Ruelas',bilanPeriod:'Período',bilanFilters:'Filtros aplicados',bilanGenerated:'Gerado em',bilanAllPeriod:'Todo o período',bilanLegendTitle:'Legenda dos indicadores',bilanLegCA:'Faturação',bilanLegCADesc:'Total das reservas confirmadas e realizadas (€).',bilanLegPaid:'Recebido',bilanLegPaidDesc:'Valor já pago pelos clientes.',bilanLegLost:'Perdido (cancelado)',bilanLegLostDesc:'Valor das reservas canceladas no período.',bilanLegAvg:'Preço médio',bilanLegAvgDesc:'Preço médio por reserva contabilizada.',bilanSecSummary:'Síntese geral',bilanSecFinance:'Finanças',bilanSecStatus:'Por estado',bilanSecMonth:'Por mês',bilanSecAgency:'Por agência',bilanSecDest:'Top destinos',bilanSecType:'Por tipo de transfer',bilanThIndicator:'Indicador',bilanThValue:'Valor',bilanThExplanation:'Explicação',bilanThMonth:'Mês',bilanThRes:'Reservas',bilanThReal:'Realizadas',bilanThAgency:'Agência',bilanThShare:'Parte do CA',bilanThDest:'Destino',bilanThType:'Tipo',bilanNeedCalc:'Calcule o balanço primeiro',bilanModeLab:'Tipo de balanço',bilanModeSynth:'📊 Síntese (agregados)',bilanModeDetail:'📋 Detalhe por cliente',bilanSecDetail:'Lista de reservas',bilanDetailHint:'Uma linha por reserva: cliente, preço, destino e valor pago.',bilanThPaidAmt:'Valor pago',bilanPdfHint:'Use « Guardar como PDF » na janela de impressão.',workBgTitle:'Cor de fundo',workBgHint:'Conforto visual durante a sessão. Reposto ao sair.',workBgReset:'Predefinido',agEmailNotifLab:'Email na atribuição',agEmailNotifSim:'Sim — notificar por email',agEmailNotifNao:'Não — sem email automático',asEmailNotifLab:'Notificar agência por email',asEmailNotifHint:'Email automático após atribuição (conforme parâmetro da agência). Desmarque para não enviar.'},
-  EN:{sPend:'Pending',sConf:'Confirmed',sCanc:'Cancelled',sReal:'Completed',thRef:'Ref.',thClient:'Client',thDate:'Date',thTime:'Time',thRoute:'Route',thPax:'Pax',thAgency:'Agency',thPrice:'Price',thStatus:'Status',thPayment:'Payment',thActions:'Actions',emptyFiltered:'No reservations match these filters.',prThFrom:'From',prThTo:'To',prThVehicle:'Vehicle',prThPaxMin:'Pax min',prThPaxMax:'Pax max',prThPrice:'Price (€)',prEmpty:'No prices configured',loadingTxt:'Loading…',fAll:'All',fStatPend:'⏳ Pending',fStatConf:'✅ Confirmed',fStatCanc:'❌ Cancelled',fStatReal:'🏁 Completed',fTypeAll:'All',fTypeAirport:'✈️ Airport → hotel',fTypeHotel:'🏨 Hotel → airport',fTypeTrain:'🚂 Train',fTypeBus:'🚌 Bus',fTypeHighspeed:'🚄 High-speed rail',bilanEmptySub:'Select a period and filters, then click "Calculate".',fSearchPh:'ID, client, email…',crOta:'OTA No.',crOtaHint:'Booking.com or Expedia',crBags:'Luggage',crOrigType:'Transfer type',crDepart:'Pickup',crDest:'Drop-off',crAddrDep:'Pickup address',crAddrDest:'Drop-off address',crOpt:'(opt.)',crDate:'Date',crHour:'Time (24h)',crVol:'Flight No.',crTransport:'Transport No.',crHintTransport:'Train, bus or ferry',crRoom:'Room No.',crStatutLab:'Initial status',crAgency:'Agency',crPrixLab:'Final price (€)',crPayLab:'Payment',crComLab:'Comments',crComPh:'Additional information…',payNon:'Unpaid',payOui:'Paid',agNonAttrib:'— No agency —',crStatPend:'⏳ Pending',crStatConf:'✅ Confirmed',hdrClear:'Clear',lblAgInfo:'⚙️ Create hotels (name, login ID, password) and set what each can do. Click ✏️ to edit.',lblPrHint:'Prices are view-only. Contact support for changes.',paidYes:'Paid',prixAutoOk:'✓ Suggested price: ',prixAutoNone:'No automatic price for this route.',bAgency:'Agency',bStat:'Status',bType:'Transfer type',btnCalc:'📊 Calculate',btnSave:'💾 Save',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Choose language — Transfer IN/OUT auto-detected',emailModalTtl:'✉️ Multilingual confirmation email',emailLangLbl:'Email language',emailLangHint:'Dropdown: the selected language updates the body preview below (same as send).',emailAirportStrong:'Transfer IN detected',emailAirportDesc:'The airport meeting point will be included in the email sent to the client.',emDirIn:'📥 Transfer IN (from airport): {n} booking(s)\n   → Welcome email + airport meeting note',emDirOut:'📤 Transfer OUT (hotel departure): {n} booking(s)\n   → Bon voyage email',emDirOther:'🚂 Other type: {n} booking(s)',emailPayTtl:'Payment method — client email',emailPayIncl:'Include payment method in the client email (row in details table — optional, same as send)',emailPayModeLbl:'Method',emailPayOff:'—',emailPaySheet:'Agency record (saved method)',emailPayDriver:'Cash to driver',emailPayReception:'Cash at hotel reception',emailPayCustom:'Custom text',emailPayCustomPh:'Free text (shown as entered)',emailPreviewTtl:'Email preview',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Close',emailBtnPreview:'👁 Preview',emailBtnSend:'✉️ Send email(s)',emailThDetail:'Detail',emailThInfo:'Information',previewToast:'Preview updated',emNoResa:'No reservation',emSendResult:'✅ {ok} email(s) sent{err}',emSendErrPart:' · ❌ {n} error(s)',emSendToast:'✉️ {ok}/{total} emails sent',bulkEmailNeedSel:'Select at least one reservation',staffLockPast:'Transfer date is today or in the past: editing, cancellation and agency change are disabled.',staffRealFuture:'« Completed » can only be set on or after the transfer day.',staffCopyNewOk:'Form prefilled — enter the new date and time.',staffAddComment:'Add comment',staffBtnEdit:'Edit',staffCommentPrevLbl:'Existing comments (read-only)',staffCommentNone:'No existing comments.',staffCommentAddPh:'New comment only…',staffCommentNeed:'Enter a comment to add.',staffCommentSaved:'Comment added.',fAgFilterAll:'All',expPrint:'🖨️ Print',expPdfOnly:'⬇ PDF',bilanHelpTitle:'How to read this report',bilanHelpText:'1) Period, report type (summary or client detail) and filters. 2) Calculate. 3) Export Excel, PDF or Print. Summary = aggregates ; Detail = one row per client (name, price, destination, amount paid).',bilanExportHint:'Exports available after calculation:',bilanReportTitle:'Transfer report — Agence Ruelas',bilanPeriod:'Period',bilanFilters:'Applied filters',bilanGenerated:'Generated on',bilanAllPeriod:'All dates',bilanLegendTitle:'Indicator legend',bilanLegCA:'Revenue',bilanLegCADesc:'Total of confirmed and completed bookings (€).',bilanLegPaid:'Collected',bilanLegPaidDesc:'Amount already paid by clients.',bilanLegLost:'Lost (cancelled)',bilanLegLostDesc:'Value of cancelled bookings in the period.',bilanLegAvg:'Average price',bilanLegAvgDesc:'Average price per counted booking.',bilanSecSummary:'Executive summary',bilanSecFinance:'Finance',bilanSecStatus:'By status',bilanSecMonth:'By month',bilanSecAgency:'By agency',bilanSecDest:'Top destinations',bilanSecType:'By transfer type',bilanThIndicator:'Indicator',bilanThValue:'Value',bilanThExplanation:'Explanation',bilanThMonth:'Month',bilanThRes:'Bookings',bilanThReal:'Completed',bilanThAgency:'Agency',bilanThShare:'Revenue share',bilanThDest:'Destination',bilanThType:'Type',bilanNeedCalc:'Calculate the report first',bilanModeLab:'Report type',bilanModeSynth:'📊 Summary (aggregates)',bilanModeDetail:'📋 Client detail',bilanSecDetail:'Booking list',bilanDetailHint:'One row per booking: client, price, destination and amount paid.',bilanThPaidAmt:'Amount paid',bilanPdfHint:'Choose « Save as PDF » in the print dialog.',workBgTitle:'Background colour',workBgHint:'Visual comfort during your session. Reset when you sign out.',workBgReset:'Default',agEmailNotifLab:'Email on assignment',agEmailNotifSim:'Yes — notify by email',agEmailNotifNao:'No — no automatic email',asEmailNotifLab:'Notify agency by email',asEmailNotifHint:'Automatic email after assignment (per agency setting). Uncheck to skip.'},
-  ES:{sPend:'Pendientes',sConf:'Confirmadas',sCanc:'Canceladas',sReal:'Realizadas',thRef:'Ref.',thClient:'Cliente',thDate:'Fecha',thTime:'Hora',thRoute:'Trayecto',thPax:'Pax',thAgency:'Agencia',thPrice:'Precio',thStatus:'Estado',thPayment:'Pago',thActions:'Acciones',emptyFiltered:'Ninguna reserva coincide con estos filtros.',prThFrom:'De',prThTo:'A',prThVehicle:'Vehículo',prThPaxMin:'Pax mín',prThPaxMax:'Pax máx',prThPrice:'Precio (€)',prEmpty:'Ningún precio configurado',loadingTxt:'Cargando…',fAll:'Todos',fStatPend:'⏳ Pendiente',fStatConf:'✅ Confirmada',fStatCanc:'❌ Cancelada',fStatReal:'🏁 Realizada',fTypeAll:'Todos',fTypeAirport:'✈️ Aeropuerto → hotel',fTypeHotel:'🏨 Hotel → aeropuerto',fTypeTrain:'🚂 Tren',fTypeBus:'🚌 Autobús',fTypeHighspeed:'🚄 Alta velocidad',bilanEmptySub:'Elija un período y filtros y pulse « Calcular ».',fSearchPh:'ID, cliente, correo…',crOta:'N° OTA',crOtaHint:'Booking.com o Expedia',crBags:'Equipaje',crOrigType:'Tipo de traslado',crDepart:'Salida',crDest:'Destino',crAddrDep:'Dirección salida',crAddrDest:'Dirección destino',crOpt:'(opc.)',crDate:'Fecha',crHour:'Hora (24 h)',crVol:'N° vuelo',crTransport:'N° transporte',crHintTransport:'Tren, autobús o ferry',crRoom:'N° habitación',crStatutLab:'Estado inicial',crAgency:'Agencia',crPrixLab:'Precio final (€)',crPayLab:'Pago',crComLab:'Comentarios',crComPh:'Información adicional…',payNon:'No pagado',payOui:'Pagado',agNonAttrib:'— Sin agencia —',crStatPend:'⏳ Pendiente',crStatConf:'✅ Confirmada',hdrClear:'Vaciar',lblAgInfo:'⚙️ Cree hoteles (nombre, ID de acceso, contraseña) y defina lo que cada uno puede hacer. Pulse ✏️ para editar.',lblPrHint:'Precios en consulta. Para cambios, contacte el soporte.',paidYes:'Pagado',prixAutoOk:'✓ Precio sugerido: ',prixAutoNone:'Ningún precio automático para este trayecto.',bAgency:'Agencia',bStat:'Estado',bType:'Tipo de traslado',btnCalc:'📊 Calcular',btnSave:'💾 Guardar',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Elija idioma — Transfer IN/OUT detectado automáticamente',emailModalTtl:'✉️ Email de confirmación multilingüe',emailLangLbl:'Idioma del correo',emailLangHint:'Desplegable: el idioma elegido actualiza la vista previa del cuerpo abajo (igual al envío).',emailAirportStrong:'Transfer IN detectado',emailAirportDesc:'El punto de encuentro en el aeropuerto se incluirá en el correo enviado al cliente.',emDirIn:'📥 Transfer IN (desde aeropuerto): {n} reserva(s)\n   → Correo de bienvenida + nota de encuentro en aeropuerto',emDirOut:'📤 Transfer OUT (salida hotel): {n} reserva(s)\n   → Correo de buen viaje',emDirOther:'🚂 Otro tipo: {n} reserva(s)',emailPayTtl:'Forma de pago — correo al cliente',emailPayIncl:'Incluir la forma de pago en el correo al cliente (fila en la tabla de detalles — opcional, igual al envío)',emailPayModeLbl:'Modo',emailPayOff:'—',emailPaySheet:'Ficha agencia (método registrado)',emailPayDriver:'Efectivo al conductor',emailPayReception:'Efectivo en recepción del hotel',emailPayCustom:'Texto personalizado',emailPayCustomPh:'Texto libre (se muestra tal cual)',emailPreviewTtl:'Vista previa del correo',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Cerrar',emailBtnPreview:'👁 Vista previa',emailBtnSend:'✉️ Enviar correo(s)',emailThDetail:'Detalle',emailThInfo:'Información',previewToast:'Vista previa actualizada',emNoResa:'Ninguna reserva',emSendResult:'✅ {ok} correo(s) enviado(s){err}',emSendErrPart:' · ❌ {n} error(es)',emSendToast:'✉️ {ok}/{total} correos enviados',bulkEmailNeedSel:'Seleccione al menos una reserva',staffLockPast:'El día del traslado es hoy o ya pasó: no se puede editar, cancelar ni cambiar agencia.',staffRealFuture:'« Realizado » solo desde el día del traslado.',staffCopyNewOk:'Formulario rellenado — indique nueva fecha y hora.',staffAddComment:'Añadir comentario',staffBtnEdit:'Editar',staffCommentPrevLbl:'Comentarios existentes (no editables)',staffCommentNone:'Ningún comentario existente.',staffCommentAddPh:'Nuevo comentario solamente…',staffCommentNeed:'Escriba un comentario a añadir.',staffCommentSaved:'Comentario añadido.',fAgFilterAll:'Todas',expPrint:'🖨️ Imprimir',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Cómo leer este balance',bilanHelpText:'1) Período, tipo de balance (resumen o detalle por cliente) y filtros. 2) Calcular. 3) Exportar Excel, PDF o Imprimir. Resumen = agregados ; Detalle = una fila por cliente (nombre, precio, destino, importe pagado).',bilanExportHint:'Exportaciones disponibles tras calcular:',bilanReportTitle:'Balance de transfers — Agence Ruelas',bilanPeriod:'Período',bilanFilters:'Filtros aplicados',bilanGenerated:'Generado el',bilanAllPeriod:'Todo el período',bilanLegendTitle:'Leyenda de indicadores',bilanLegCA:'Facturación',bilanLegCADesc:'Total de reservas confirmadas y realizadas (€).',bilanLegPaid:'Cobrado',bilanLegPaidDesc:'Importe ya pagado por clientes.',bilanLegLost:'Perdido (cancelado)',bilanLegLostDesc:'Valor de reservas canceladas en el período.',bilanLegAvg:'Precio medio',bilanLegAvgDesc:'Precio medio por reserva contabilizada.',bilanSecSummary:'Resumen general',bilanSecFinance:'Finanzas',bilanSecStatus:'Por estado',bilanSecMonth:'Por mes',bilanSecAgency:'Por agencia',bilanSecDest:'Top destinos',bilanSecType:'Por tipo de traslado',bilanThIndicator:'Indicador',bilanThValue:'Valor',bilanThExplanation:'Explicación',bilanThMonth:'Mes',bilanThRes:'Reservas',bilanThReal:'Realizadas',bilanThAgency:'Agencia',bilanThShare:'Parte del CA',bilanThDest:'Destino',bilanThType:'Tipo',bilanNeedCalc:'Calcule el balance primero',bilanModeLab:'Tipo de balance',bilanModeSynth:'📊 Resumen (agregados)',bilanModeDetail:'📋 Detalle por cliente',bilanSecDetail:'Lista de reservas',bilanDetailHint:'Una fila por reserva: cliente, precio, destino e importe pagado.',bilanThPaidAmt:'Importe pagado',bilanPdfHint:'Use « Guardar como PDF » en el diálogo de impresión.',workBgTitle:'Color de fondo',workBgHint:'Confort visual durante la sesión. Se restablece al cerrar sesión.',workBgReset:'Predeterminado',agEmailNotifLab:'Email al asignar',agEmailNotifSim:'Sí — notificar por email',agEmailNotifNao:'No — sin email automático',asEmailNotifLab:'Notificar agencia por email',asEmailNotifHint:'Email automático tras asignación (según parámetro de agencia). Desmarque para no enviar.'}
+  FR:{sPend:'En attente',sConf:'Confirmées',sCanc:'Annulées',sReal:'Terminées',thRef:'Réf.',thClient:'Client',thDate:'Date',thTime:'Heure',thRoute:'Trajet',thPax:'Pax',thAgency:'Agence',thPrice:'Prix',thStatus:'Statut',thPayment:'Paiement',thActions:'Actions',emptyFiltered:'Aucune réservation ne correspond à ces filtres.',prThFrom:'De',prThTo:'Vers',prThVehicle:'Véhicule',prThPaxMin:'Pax min',prThPaxMax:'Pax max',prThPrice:'Prix (€)',prEmpty:'Aucun tarif configuré',loadingTxt:'Chargement…',fAll:'Tous',fStatPend:'⏳ En attente',fStatConf:'✅ Confirmé',fStatCanc:'❌ Annulé',fStatReal:'🏁 Terminé',fTypeAll:'Tous',fTypeAirport:'✈️ Aéroport → hôtel',fTypeHotel:'🏨 Hôtel → aéroport',fTypeTrain:'🚂 Train',fTypeBus:'🚌 Bus',fTypeHighspeed:'🚄 Haute vitesse',bilanEmptySub:'Sélectionnez une période et des filtres, puis cliquez sur « Calculer ».',fSearchPh:'ID, client, e-mail…',crOta:'N° OTA',crOtaHint:'Booking.com ou Expedia',crBags:'Bagages',crOrigType:'Type de transfert',crDepart:'Départ',crDest:'Destination',crAddrDep:'Adresse départ',crAddrDest:'Adresse destination',crOpt:'(opt.)',crDate:'Date',crHour:'Heure (24 h)',crVol:'N° de vol',crTransport:'N° transport',crHintTransport:'Train, bus ou ferry',crRoom:'N° de chambre',crStatutLab:'Statut initial',crAgency:'Agence',crPrixLab:'Prix final (€)',crPayLab:'Paiement',crComLab:'Commentaires',crComPh:'Informations complémentaires…',payNon:'Non payé',payOui:'Payé',agNonAttrib:'— Sans agence —',crStatPend:'⏳ En attente',crStatConf:'✅ Confirmé',hdrClear:'Vider',lblAgInfo:'⚙️ Créez des hôtels (nom, ID + mot de passe). Le login actuel reste toujours visible ici — seule l\'Agence le change.',lblPrHint:'Tarifs en consultation. Pour toute modification, contactez le support.',paidYes:'Payé',prixAutoOk:'✓ Tarif suggéré : ',prixAutoNone:'Aucun tarif automatique pour ce trajet.',bAgency:'Agence',bStat:'Statut',bType:'Type de transfert',btnCalc:'📊 Calculer',btnSave:'💾 Enregistrer',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Choisir la langue — Transfer IN/OUT détecté automatiquement',emailModalTtl:'✉️ Email de confirmation multilingue',emailLangLbl:'Langue de l\'email',emailLangHint:'Liste déroulante : la langue choisie met à jour l\'aperçu du corps d\'email ci-dessous (identique à l\'envoi).',emailAirportStrong:'Transfer IN détecté',emailAirportDesc:'Le point de rencontre aéroport sera inclus dans l\'email envoyé au client.',emDirIn:'📥 Transfer IN (depuis aéroport) : {n} réservation(s)\n   → Email d\'accueil + note de rencontre aéroport',emDirOut:'📤 Transfer OUT (départ hôtel) : {n} réservation(s)\n   → Email de bon voyage',emDirOther:'🚂 Autre type : {n} réservation(s)',emailPayTtl:'Mode de paiement — email client',emailPayIncl:'Inclure le mode de paiement dans l\'email au client (ligne dans le tableau des détails — optionnel, identique à l\'envoi)',emailPayModeLbl:'Mode',emailPayOff:'—',emailPaySheet:'Fiche agence (méthode enregistrée)',emailPayDriver:'Espèces au chauffeur',emailPayReception:'Espèces à la réception hôtel',emailPayCustom:'Texte personnalisé',emailPayCustomPh:'Texte libre (affiché tel quel)',emailPreviewTtl:'Aperçu de l\'email',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Fermer',emailBtnPreview:'👁 Aperçu',emailBtnSend:'✉️ Envoyer email(s)',emailThDetail:'Détail',emailThInfo:'Information',previewToast:'Aperçu mis à jour',emNoResa:'Aucune réservation',emSendResult:'✅ {ok} email(s) envoyé(s){err}',emSendErrPart:' · ❌ {n} erreur(s)',emSendToast:'✉️ {ok}/{total} emails envoyés',bulkEmailNeedSel:'Sélectionner au moins une réservation',staffLockPast:'Jour du transfert atteint ou passé : modification, annulation et changement d\'agence ne sont plus possibles.',staffRealFuture:'« Réalisé » est disponible uniquement à partir du jour du transfert.',staffCopyNewOk:'Formulaire prérempli — saisissez la nouvelle date et l\'heure.',staffAddComment:'Ajouter commentaire',staffBtnEdit:'Éditer',staffCommentPrevLbl:'Commentaires existants (non modifiables)',staffCommentNone:'Aucun commentaire existant.',staffCommentAddPh:'Nouveau commentaire uniquement…',staffCommentNeed:'Saisissez un commentaire à ajouter.',staffCommentSaved:'Commentaire ajouté.',fAgFilterAll:'Toutes',expPrint:'🖨️ Imprimer',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Comment lire ce bilan',bilanHelpText:'1) Période, type de bilan (synthèse ou détail clients) et filtres. 2) Calculer. 3) Exporter en Excel, PDF ou Imprimer. Synthèse = agrégats ; Détail = une ligne par client (nom, prix, destination, montant payé).',bilanExportHint:'Exports disponibles après calcul :',bilanReportTitle:'Bilan des transferts — Agence Ruelas',bilanPeriod:'Période',bilanFilters:'Filtres appliqués',bilanGenerated:'Généré le',bilanAllPeriod:'Toute période',bilanLegendTitle:'Légende des indicateurs',bilanLegCA:'Chiffre d\'affaires',bilanLegCADesc:'Montant total des réservations confirmées et réalisées (€).',bilanLegPaid:'Encaissé',bilanLegPaidDesc:'Montant déjà payé par les clients.',bilanLegLost:'Perdu (annulé)',bilanLegLostDesc:'Valeur des réservations annulées sur la période.',bilanLegAvg:'Prix moyen',bilanLegAvgDesc:'Prix moyen par réservation comptabilisée.',bilanSecSummary:'Synthèse générale',bilanSecFinance:'Finances',bilanSecStatus:'Répartition par statut',bilanSecMonth:'Par mois',bilanSecAgency:'Par agence',bilanSecDest:'Top destinations',bilanSecType:'Par type de transfert',bilanThIndicator:'Indicateur',bilanThValue:'Valeur',bilanThExplanation:'Explication',bilanThMonth:'Mois',bilanThRes:'Réservations',bilanThReal:'Réalisées',bilanThAgency:'Agence',bilanThShare:'Part du CA',bilanThDest:'Destination',bilanThType:'Type',bilanNeedCalc:'Calculez le bilan d\'abord',bilanModeLab:'Type de bilan',bilanModeSynth:'📊 Synthèse (agrégats)',bilanModeDetail:'📋 Détail par client',bilanSecDetail:'Liste des réservations',bilanDetailHint:'Une ligne par réservation : client, prix, destination et montant payé.',bilanThPaidAmt:'Montant payé',bilanPdfHint:'Utilisez « Enregistrer au format PDF » dans la boîte d\'impression.',workBgTitle:'Couleur de fond',workBgHint:'Confort visuel pendant votre session. Réinitialisé à la déconnexion.',workBgReset:'Par défaut',agEmailNotifLab:"Email à chaque résa hôtel",agEmailNotifSim:'Oui — agence notifiée par email',agEmailNotifNao:'Non — pas d\'email auto',asEmailNotifLab:"Notifier l'hôtel par email",asEmailNotifHint:'Email automatique à l\'hôtel après attribution (selon paramètre de la fiche). Décochez pour ne pas envoyer.'},
+  PT:{sPend:'Pendentes',sConf:'Confirmadas',sCanc:'Canceladas',sReal:'Realizadas',thRef:'Ref.',thClient:'Cliente',thDate:'Data',thTime:'Hora',thRoute:'Trajeto',thPax:'Pax',thAgency:'Agência',thPrice:'Preço',thStatus:'Estado',thPayment:'Pagamento',thActions:'Ações',emptyFiltered:'Nenhuma reserva corresponde a estes filtros.',prThFrom:'De',prThTo:'Para',prThVehicle:'Veículo',prThPaxMin:'Pax mín',prThPaxMax:'Pax máx',prThPrice:'Preço (€)',prEmpty:'Nenhum preço configurado',loadingTxt:'A carregar…',fAll:'Todos',fStatPend:'⏳ Pendente',fStatConf:'✅ Confirmado',fStatCanc:'❌ Cancelado',fStatReal:'🏁 Realizado',fTypeAll:'Todos',fTypeAirport:'✈️ Aeroporto → hotel',fTypeHotel:'🏨 Hotel → aeroporto',fTypeTrain:'🚂 Comboio',fTypeBus:'🚌 Autocarro',fTypeHighspeed:'🚄 Alta velocidade',bilanEmptySub:'Escolha um período e filtros e clique em « Calcular ».',fSearchPh:'ID, cliente, e-mail…',crOta:'N° OTA',crOtaHint:'Booking.com ou Expedia',crBags:'Bagagens',crOrigType:'Tipo de transfer',crDepart:'Partida',crDest:'Destino',crAddrDep:'Morada partida',crAddrDest:'Morada destino',crOpt:'(opc.)',crDate:'Data',crHour:'Hora (24 h)',crVol:'N° voo',crTransport:'N° transporte',crHintTransport:'Comboio, autocarro ou ferry',crRoom:'N° quarto',crStatutLab:'Estado inicial',crAgency:'Agência',crPrixLab:'Preço final (€)',crPayLab:'Pagamento',crComLab:'Comentários',crComPh:'Informações adicionais…',payNon:'Não pago',payOui:'Pago',agNonAttrib:'— Sem agência —',crStatPend:'⏳ Pendente',crStatConf:'✅ Confirmado',hdrClear:'Limpar',lblAgInfo:'⚙️ Crie hotéis (nome, ID + palavra-passe de login). O login atual aparece sempre abaixo — só a Agência pode alterá-lo. Clique em ✏️ para editar.',lblPrHint:'Preços em consulta. Para alterações, contacte o suporte.',paidYes:'Pago',prixAutoOk:'✓ Preço sugerido: ',prixAutoNone:'Nenhum preço automático para este trajeto.',bAgency:'Agência',bStat:'Estado',bType:'Tipo de transfer',btnCalc:'📊 Calcular',btnSave:'💾 Guardar',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Escolha o idioma — Transfer IN/OUT detetado automaticamente',emailModalTtl:'✉️ Email de confirmação multilingue',emailLangLbl:'Idioma do email',emailLangHint:'Menu pendente: o idioma escolhido atualiza a pré-visualização do corpo abaixo (igual ao envio).',emailAirportStrong:'Transfer IN detetado',emailAirportDesc:'O ponto de encontro no aeroporto será incluído no email enviado ao cliente.',emDirIn:'📥 Transfer IN (desde aeroporto): {n} reserva(s)\n   → Email de boas-vindas + nota de encontro no aeroporto',emDirOut:'📤 Transfer OUT (saída do hotel): {n} reserva(s)\n   → Email de boa viagem',emDirOther:'🚂 Outro tipo: {n} reserva(s)',emailPayTtl:'Modo de pagamento — email ao cliente',emailPayIncl:'Incluir o modo de pagamento no email ao cliente (linha na tabela de detalhes — opcional, igual ao envio)',emailPayModeLbl:'Modo',emailPayOff:'—',emailPaySheet:'Ficha agência (método registado)',emailPayDriver:'Numerário ao motorista',emailPayReception:'Numerário na receção do hotel',emailPayCustom:'Texto personalizado',emailPayCustomPh:'Texto livre (mostrado tal como está)',emailPreviewTtl:'Pré-visualização do email',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Fechar',emailBtnPreview:'👁 Pré-visualizar',emailBtnSend:'✉️ Enviar email(s)',emailThDetail:'Detalhe',emailThInfo:'Informação',previewToast:'Pré-visualização atualizada',emNoResa:'Nenhuma reserva',emSendResult:'✅ {ok} email(s) enviado(s){err}',emSendErrPart:' · ❌ {n} erro(s)',emSendToast:'✉️ {ok}/{total} emails enviados',bulkEmailNeedSel:'Selecione pelo menos uma reserva',staffLockPast:'Dia do transfer igual ou ultrapassado: não é possível editar, anular ou alterar a agência.',staffRealFuture:'« Realizado » só a partir do dia do transfer.',staffCopyNewOk:'Formulário preenchido — indique nova data e hora.',staffAddComment:'Adicionar comentário',staffBtnEdit:'Editar',staffCommentPrevLbl:'Comentários existentes (não editáveis)',staffCommentNone:'Nenhum comentário existente.',staffCommentAddPh:'Novo comentário apenas…',staffCommentNeed:'Introduza um comentário a adicionar.',staffCommentSaved:'Comentário adicionado.',fAgFilterAll:'Todas',expPrint:'🖨️ Imprimir',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Como ler este balanço',bilanHelpText:'1) Período, tipo de balanço (síntese ou detalhe por cliente) e filtros. 2) Calcular. 3) Exportar Excel, PDF ou Imprimir. Síntese = agregados ; Detalhe = uma linha por cliente (nome, preço, destino, valor pago).',bilanExportHint:'Exportações disponíveis após cálculo:',bilanReportTitle:'Balanço de transfers — Agence Ruelas',bilanPeriod:'Período',bilanFilters:'Filtros aplicados',bilanGenerated:'Gerado em',bilanAllPeriod:'Todo o período',bilanLegendTitle:'Legenda dos indicadores',bilanLegCA:'Faturação',bilanLegCADesc:'Total das reservas confirmadas e realizadas (€).',bilanLegPaid:'Recebido',bilanLegPaidDesc:'Valor já pago pelos clientes.',bilanLegLost:'Perdido (cancelado)',bilanLegLostDesc:'Valor das reservas canceladas no período.',bilanLegAvg:'Preço médio',bilanLegAvgDesc:'Preço médio por reserva contabilizada.',bilanSecSummary:'Síntese geral',bilanSecFinance:'Finanças',bilanSecStatus:'Por estado',bilanSecMonth:'Por mês',bilanSecAgency:'Por agência',bilanSecDest:'Top destinos',bilanSecType:'Por tipo de transfer',bilanThIndicator:'Indicador',bilanThValue:'Valor',bilanThExplanation:'Explicação',bilanThMonth:'Mês',bilanThRes:'Reservas',bilanThReal:'Realizadas',bilanThAgency:'Agência',bilanThShare:'Parte do CA',bilanThDest:'Destino',bilanThType:'Tipo',bilanNeedCalc:'Calcule o balanço primeiro',bilanModeLab:'Tipo de balanço',bilanModeSynth:'📊 Síntese (agregados)',bilanModeDetail:'📋 Detalhe por cliente',bilanSecDetail:'Lista de reservas',bilanDetailHint:'Uma linha por reserva: cliente, preço, destino e valor pago.',bilanThPaidAmt:'Valor pago',bilanPdfHint:'Use « Guardar como PDF » na janela de impressão.',workBgTitle:'Cor de fundo',workBgHint:'Conforto visual durante a sessão. Reposto ao sair.',workBgReset:'Predefinido',agEmailNotifLab:'Email a cada reserva do hotel',agEmailNotifSim:'Sim — agência notificada por email',agEmailNotifNao:'Não — sem email automático',asEmailNotifLab:'Notificar hotel por email',asEmailNotifHint:'Email automático ao hotel após atribuição (conforme parâmetro da ficha). Desmarque para não enviar.'},
+  EN:{sPend:'Pending',sConf:'Confirmed',sCanc:'Cancelled',sReal:'Completed',thRef:'Ref.',thClient:'Client',thDate:'Date',thTime:'Time',thRoute:'Route',thPax:'Pax',thAgency:'Agency',thPrice:'Price',thStatus:'Status',thPayment:'Payment',thActions:'Actions',emptyFiltered:'No reservations match these filters.',prThFrom:'From',prThTo:'To',prThVehicle:'Vehicle',prThPaxMin:'Pax min',prThPaxMax:'Pax max',prThPrice:'Price (€)',prEmpty:'No prices configured',loadingTxt:'Loading…',fAll:'All',fStatPend:'⏳ Pending',fStatConf:'✅ Confirmed',fStatCanc:'❌ Cancelled',fStatReal:'🏁 Completed',fTypeAll:'All',fTypeAirport:'✈️ Airport → hotel',fTypeHotel:'🏨 Hotel → airport',fTypeTrain:'🚂 Train',fTypeBus:'🚌 Bus',fTypeHighspeed:'🚄 High-speed rail',bilanEmptySub:'Select a period and filters, then click "Calculate".',fSearchPh:'ID, client, email…',crOta:'OTA No.',crOtaHint:'Booking.com or Expedia',crBags:'Luggage',crOrigType:'Transfer type',crDepart:'Pickup',crDest:'Drop-off',crAddrDep:'Pickup address',crAddrDest:'Drop-off address',crOpt:'(opt.)',crDate:'Date',crHour:'Time (24h)',crVol:'Flight No.',crTransport:'Transport No.',crHintTransport:'Train, bus or ferry',crRoom:'Room No.',crStatutLab:'Initial status',crAgency:'Agency',crPrixLab:'Final price (€)',crPayLab:'Payment',crComLab:'Comments',crComPh:'Additional information…',payNon:'Unpaid',payOui:'Paid',agNonAttrib:'— No agency —',crStatPend:'⏳ Pending',crStatConf:'✅ Confirmed',hdrClear:'Clear',lblAgInfo:'⚙️ Create hotels (name, login ID, password) and set what each can do. Click ✏️ to edit.',lblPrHint:'Prices are view-only. Contact support for changes.',paidYes:'Paid',prixAutoOk:'✓ Suggested price: ',prixAutoNone:'No automatic price for this route.',bAgency:'Agency',bStat:'Status',bType:'Transfer type',btnCalc:'📊 Calculate',btnSave:'💾 Save',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Choose language — Transfer IN/OUT auto-detected',emailModalTtl:'✉️ Multilingual confirmation email',emailLangLbl:'Email language',emailLangHint:'Dropdown: the selected language updates the body preview below (same as send).',emailAirportStrong:'Transfer IN detected',emailAirportDesc:'The airport meeting point will be included in the email sent to the client.',emDirIn:'📥 Transfer IN (from airport): {n} booking(s)\n   → Welcome email + airport meeting note',emDirOut:'📤 Transfer OUT (hotel departure): {n} booking(s)\n   → Bon voyage email',emDirOther:'🚂 Other type: {n} booking(s)',emailPayTtl:'Payment method — client email',emailPayIncl:'Include payment method in the client email (row in details table — optional, same as send)',emailPayModeLbl:'Method',emailPayOff:'—',emailPaySheet:'Agency record (saved method)',emailPayDriver:'Cash to driver',emailPayReception:'Cash at hotel reception',emailPayCustom:'Custom text',emailPayCustomPh:'Free text (shown as entered)',emailPreviewTtl:'Email preview',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Close',emailBtnPreview:'👁 Preview',emailBtnSend:'✉️ Send email(s)',emailThDetail:'Detail',emailThInfo:'Information',previewToast:'Preview updated',emNoResa:'No reservation',emSendResult:'✅ {ok} email(s) sent{err}',emSendErrPart:' · ❌ {n} error(s)',emSendToast:'✉️ {ok}/{total} emails sent',bulkEmailNeedSel:'Select at least one reservation',staffLockPast:'Transfer date is today or in the past: editing, cancellation and agency change are disabled.',staffRealFuture:'« Completed » can only be set on or after the transfer day.',staffCopyNewOk:'Form prefilled — enter the new date and time.',staffAddComment:'Add comment',staffBtnEdit:'Edit',staffCommentPrevLbl:'Existing comments (read-only)',staffCommentNone:'No existing comments.',staffCommentAddPh:'New comment only…',staffCommentNeed:'Enter a comment to add.',staffCommentSaved:'Comment added.',fAgFilterAll:'All',expPrint:'🖨️ Print',expPdfOnly:'⬇ PDF',bilanHelpTitle:'How to read this report',bilanHelpText:'1) Period, report type (summary or client detail) and filters. 2) Calculate. 3) Export Excel, PDF or Print. Summary = aggregates ; Detail = one row per client (name, price, destination, amount paid).',bilanExportHint:'Exports available after calculation:',bilanReportTitle:'Transfer report — Agence Ruelas',bilanPeriod:'Period',bilanFilters:'Applied filters',bilanGenerated:'Generated on',bilanAllPeriod:'All dates',bilanLegendTitle:'Indicator legend',bilanLegCA:'Revenue',bilanLegCADesc:'Total of confirmed and completed bookings (€).',bilanLegPaid:'Collected',bilanLegPaidDesc:'Amount already paid by clients.',bilanLegLost:'Lost (cancelled)',bilanLegLostDesc:'Value of cancelled bookings in the period.',bilanLegAvg:'Average price',bilanLegAvgDesc:'Average price per counted booking.',bilanSecSummary:'Executive summary',bilanSecFinance:'Finance',bilanSecStatus:'By status',bilanSecMonth:'By month',bilanSecAgency:'By agency',bilanSecDest:'Top destinations',bilanSecType:'By transfer type',bilanThIndicator:'Indicator',bilanThValue:'Value',bilanThExplanation:'Explanation',bilanThMonth:'Month',bilanThRes:'Bookings',bilanThReal:'Completed',bilanThAgency:'Agency',bilanThShare:'Revenue share',bilanThDest:'Destination',bilanThType:'Type',bilanNeedCalc:'Calculate the report first',bilanModeLab:'Report type',bilanModeSynth:'📊 Summary (aggregates)',bilanModeDetail:'📋 Client detail',bilanSecDetail:'Booking list',bilanDetailHint:'One row per booking: client, price, destination and amount paid.',bilanThPaidAmt:'Amount paid',bilanPdfHint:'Choose « Save as PDF » in the print dialog.',workBgTitle:'Background colour',workBgHint:'Visual comfort during your session. Reset when you sign out.',workBgReset:'Default',agEmailNotifLab:'Email on each hotel booking',agEmailNotifSim:'Yes — notify agency by email',agEmailNotifNao:'No — no automatic email',asEmailNotifLab:'Notify hotel by email',asEmailNotifHint:'Automatic email to the hotel after assignment (per hotel setting). Uncheck to skip.'},
+  ES:{sPend:'Pendientes',sConf:'Confirmadas',sCanc:'Canceladas',sReal:'Realizadas',thRef:'Ref.',thClient:'Cliente',thDate:'Fecha',thTime:'Hora',thRoute:'Trayecto',thPax:'Pax',thAgency:'Agencia',thPrice:'Precio',thStatus:'Estado',thPayment:'Pago',thActions:'Acciones',emptyFiltered:'Ninguna reserva coincide con estos filtros.',prThFrom:'De',prThTo:'A',prThVehicle:'Vehículo',prThPaxMin:'Pax mín',prThPaxMax:'Pax máx',prThPrice:'Precio (€)',prEmpty:'Ningún precio configurado',loadingTxt:'Cargando…',fAll:'Todos',fStatPend:'⏳ Pendiente',fStatConf:'✅ Confirmada',fStatCanc:'❌ Cancelada',fStatReal:'🏁 Realizada',fTypeAll:'Todos',fTypeAirport:'✈️ Aeropuerto → hotel',fTypeHotel:'🏨 Hotel → aeropuerto',fTypeTrain:'🚂 Tren',fTypeBus:'🚌 Autobús',fTypeHighspeed:'🚄 Alta velocidad',bilanEmptySub:'Elija un período y filtros y pulse « Calcular ».',fSearchPh:'ID, cliente, correo…',crOta:'N° OTA',crOtaHint:'Booking.com o Expedia',crBags:'Equipaje',crOrigType:'Tipo de traslado',crDepart:'Salida',crDest:'Destino',crAddrDep:'Dirección salida',crAddrDest:'Dirección destino',crOpt:'(opc.)',crDate:'Fecha',crHour:'Hora (24 h)',crVol:'N° vuelo',crTransport:'N° transporte',crHintTransport:'Tren, autobús o ferry',crRoom:'N° habitación',crStatutLab:'Estado inicial',crAgency:'Agencia',crPrixLab:'Precio final (€)',crPayLab:'Pago',crComLab:'Comentarios',crComPh:'Información adicional…',payNon:'No pagado',payOui:'Pagado',agNonAttrib:'— Sin agencia —',crStatPend:'⏳ Pendiente',crStatConf:'✅ Confirmada',hdrClear:'Vaciar',lblAgInfo:'⚙️ Cree hoteles (nombre, ID de acceso, contraseña) y defina lo que cada uno puede hacer. Pulse ✏️ para editar.',lblPrHint:'Precios en consulta. Para cambios, contacte el soporte.',paidYes:'Pagado',prixAutoOk:'✓ Precio sugerido: ',prixAutoNone:'Ningún precio automático para este trayecto.',bAgency:'Agencia',bStat:'Estado',bType:'Tipo de traslado',btnCalc:'📊 Calcular',btnSave:'💾 Guardar',expCsv:'⬇ CSV',expXls:'⬇ Excel',expPdf:'⬇ PDF / 🖨️',emailSub:'Elija idioma — Transfer IN/OUT detectado automáticamente',emailModalTtl:'✉️ Email de confirmación multilingüe',emailLangLbl:'Idioma del correo',emailLangHint:'Desplegable: el idioma elegido actualiza la vista previa del cuerpo abajo (igual al envío).',emailAirportStrong:'Transfer IN detectado',emailAirportDesc:'El punto de encuentro en el aeropuerto se incluirá en el correo enviado al cliente.',emDirIn:'📥 Transfer IN (desde aeropuerto): {n} reserva(s)\n   → Correo de bienvenida + nota de encuentro en aeropuerto',emDirOut:'📤 Transfer OUT (salida hotel): {n} reserva(s)\n   → Correo de buen viaje',emDirOther:'🚂 Otro tipo: {n} reserva(s)',emailPayTtl:'Forma de pago — correo al cliente',emailPayIncl:'Incluir la forma de pago en el correo al cliente (fila en la tabla de detalles — opcional, igual al envío)',emailPayModeLbl:'Modo',emailPayOff:'—',emailPaySheet:'Ficha agencia (método registrado)',emailPayDriver:'Efectivo al conductor',emailPayReception:'Efectivo en recepción del hotel',emailPayCustom:'Texto personalizado',emailPayCustomPh:'Texto libre (se muestra tal cual)',emailPreviewTtl:'Vista previa del correo',emailPreviewHdr:'📧 Agence Ruelas — Transfer Service',emailBtnClose:'Cerrar',emailBtnPreview:'👁 Vista previa',emailBtnSend:'✉️ Enviar correo(s)',emailThDetail:'Detalle',emailThInfo:'Información',previewToast:'Vista previa actualizada',emNoResa:'Ninguna reserva',emSendResult:'✅ {ok} correo(s) enviado(s){err}',emSendErrPart:' · ❌ {n} error(es)',emSendToast:'✉️ {ok}/{total} correos enviados',bulkEmailNeedSel:'Seleccione al menos una reserva',staffLockPast:'El día del traslado es hoy o ya pasó: no se puede editar, cancelar ni cambiar agencia.',staffRealFuture:'« Realizado » solo desde el día del traslado.',staffCopyNewOk:'Formulario rellenado — indique nueva fecha y hora.',staffAddComment:'Añadir comentario',staffBtnEdit:'Editar',staffCommentPrevLbl:'Comentarios existentes (no editables)',staffCommentNone:'Ningún comentario existente.',staffCommentAddPh:'Nuevo comentario solamente…',staffCommentNeed:'Escriba un comentario a añadir.',staffCommentSaved:'Comentario añadido.',fAgFilterAll:'Todas',expPrint:'🖨️ Imprimir',expPdfOnly:'⬇ PDF',bilanHelpTitle:'Cómo leer este balance',bilanHelpText:'1) Período, tipo de balance (resumen o detalle por cliente) y filtros. 2) Calcular. 3) Exportar Excel, PDF o Imprimir. Resumen = agregados ; Detalle = una fila por cliente (nombre, precio, destino, importe pagado).',bilanExportHint:'Exportaciones disponibles tras calcular:',bilanReportTitle:'Balance de transfers — Agence Ruelas',bilanPeriod:'Período',bilanFilters:'Filtros aplicados',bilanGenerated:'Generado el',bilanAllPeriod:'Todo el período',bilanLegendTitle:'Leyenda de indicadores',bilanLegCA:'Facturación',bilanLegCADesc:'Total de reservas confirmadas y realizadas (€).',bilanLegPaid:'Cobrado',bilanLegPaidDesc:'Importe ya pagado por clientes.',bilanLegLost:'Perdido (cancelado)',bilanLegLostDesc:'Valor de reservas canceladas en el período.',bilanLegAvg:'Precio medio',bilanLegAvgDesc:'Precio medio por reserva contabilizada.',bilanSecSummary:'Resumen general',bilanSecFinance:'Finanzas',bilanSecStatus:'Por estado',bilanSecMonth:'Por mes',bilanSecAgency:'Por agencia',bilanSecDest:'Top destinos',bilanSecType:'Por tipo de traslado',bilanThIndicator:'Indicador',bilanThValue:'Valor',bilanThExplanation:'Explicación',bilanThMonth:'Mes',bilanThRes:'Reservas',bilanThReal:'Realizadas',bilanThAgency:'Agencia',bilanThShare:'Parte del CA',bilanThDest:'Destino',bilanThType:'Tipo',bilanNeedCalc:'Calcule el balance primero',bilanModeLab:'Tipo de balance',bilanModeSynth:'📊 Resumen (agregados)',bilanModeDetail:'📋 Detalle por cliente',bilanSecDetail:'Lista de reservas',bilanDetailHint:'Una fila por reserva: cliente, precio, destino e importe pagado.',bilanThPaidAmt:'Importe pagado',bilanPdfHint:'Use « Guardar como PDF » en el diálogo de impresión.',workBgTitle:'Color de fondo',workBgHint:'Confort visual durante la sesión. Se restablece al cerrar sesión.',workBgReset:'Predeterminado',agEmailNotifLab:'Email por cada reserva del hotel',agEmailNotifSim:'Sí — agencia notificada por email',agEmailNotifNao:'No — sin email automático',asEmailNotifLab:'Notificar hotel por email',asEmailNotifHint:'Email automático al hotel tras asignación (según parámetro de la ficha). Desmarque para no enviar.'}
 };
 
 
@@ -2925,7 +3073,7 @@ function updateEmailMboxPager(meta){
 // ÉTAT GLOBAL
 // ═══════════════════════════════════════════════════════════
 const S={
-  token:null,lang:'PT',
+  token:null,adminId:null,fullAccess:true,lang:'PT',
   reservas:[],agencias:[],permissions:{},prices:[],lieux:[],bilanData:null,
   selectedIds:new Set(),
   curId:null,curWaLang:'pt',curWaResa:null,curWaTel:null,curAgWaLang:'pt',
@@ -3236,7 +3384,10 @@ async function doLogin(){
     const d=await api({action:'connexionHotel',adminId:id,motDePasse:pw},{timeoutMs:25000});
     if(!d.success){showMsgBox('login-err',d.error||t().errEmpty,'err');return;}
     S.token=d.token;
+    S.adminId=d.adminId||id||'AGENCE_ADMIN';
+    S.fullAccess=d.fullAccess!==false && d.peutGererMdpHotels!==false;
     persistHotelSessionToken(S.token);
+    try{sessionStorage.setItem('nlp_staff_admin_id',S.adminId);}catch(e){}
     bumpHotelActivity();
     showScreen('app-screen');
   }catch(e){showMsgBox('login-err',t().errConn+'\n'+e.message,'err');return;}
@@ -3250,7 +3401,8 @@ async function doLogin(){
 async function doLogout(){
   try{await api({action:'deconnexionHotel',adminToken:S.token});}catch(e){}
   clearHotelSessionStorage();
-  S.token=null;S.reservas=[];S.agencias=[];
+  S.token=null;S.adminId=null;S.fullAccess=false;S.reservas=[];S.agencias=[];
+  try{sessionStorage.removeItem('nlp_staff_admin_id');}catch(e){}
   document.getElementById('a-id').value='';document.getElementById('a-pass').value='';
   showResetStep(0);showScreen('ls');
 }
@@ -3373,18 +3525,25 @@ async function loadAgenciasTab(){
   const frag=document.createDocumentFragment();
   const table=document.createElement('table');
   const thead=document.createElement('thead');
-  thead.innerHTML='<tr><th>ID (login)</th><th>Nome</th><th>Palavra-passe</th><th>Email</th><th>WhatsApp</th><th>Língua</th><th>Parâmetros</th><th>Estado</th><th>Ações</th></tr>';
+  thead.innerHTML='<tr><th>ID (login)</th><th>Nome</th><th>Palavra-passe</th><th>Email (reset)</th><th>WhatsApp</th><th>Língua</th><th>Parâmetros</th><th>Estado</th><th>Ações</th></tr>';
   table.appendChild(thead);
   const tbody=document.createElement('tbody');
   S.agencias.forEach(a=>{
     const rawWa=a.telefoneWA||a.telefoneWhatsapp||'';
     const waOk=(a.useWA==='sim'||a.useWhatsapp==='sim')&&(rawWa.trim()!=='');
     const waPrev=waOk?formatAgWaCellPreview(rawWa):'';
+    const pw=a.motDePasse||'';
+    const pwEsc=String(pw).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td class="mono">${a.id}</td>
       <td class="bold">${a.nom}</td>
-      <td class="mono" style="font-size:12px;font-weight:600;color:var(--gold)">${a.motDePasse||'—'}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span class="mono ag-pw-mask" data-pw="${pwEsc}" data-shown="0" style="font-size:12px;font-weight:600;color:var(--gold);letter-spacing:.08em">••••••••</span>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="toggleHotelPassCell(this)" title="Mostrar / ocultar palavra-passe" ${staffPeutGererMdpHotels_()?'':'disabled style="opacity:.4"'}>👁</button>
+        </div>
+      </td>
       <td style="font-size:12px">${a.email||'—'}</td>
       <td>${waOk?`<span style="color:var(--whatsapp);font-weight:600;font-size:12px">${waPrev}</span><div style="font-size:10px;color:var(--ts);margin-top:2px;white-space:pre-wrap;max-width:220px">${String(rawWa).replace(/</g,'&lt;').slice(0,120)}${String(rawWa).length>120?'…':''}</div>`:'<span style="color:var(--ts);font-size:12px">Desativado</span>'}</td>
       <td>${a.langueContact||'PT'}</td>
@@ -3648,11 +3807,48 @@ function hiPrevPage(){ if(S.hiPage>1){S.hiPage--;loadHistoriqueTab();} }
 function hiNextPage(){ if(S.hiPage<S.hiTotalPages){S.hiPage++;loadHistoriqueTab();} }
 
 // ═══════════════════════════════════════════════════════════
-// LIEUX (partidas / destinos — morada opcional)
+// LIEUX (partidas / destinos — gerais ou por hotel)
 // ═══════════════════════════════════════════════════════════
-async function fetchLieuxList(){
+function fillHotelSelectOptions_(selId, includeGlobal){
+  const sel=document.getElementById(selId);if(!sel)return;
+  const prev=sel.value;
+  const keep=[];
+  if(includeGlobal){
+    keep.push({v:'',t:'Geral (todos)'});
+  }
+  (S.agencias||[]).forEach(a=>keep.push({v:a.id,t:a.id+' — '+a.nom}));
+  sel.innerHTML='';
+  if(selId==='lieux-filter-hotel'||selId==='pr-filter-hotel'){
+    sel.innerHTML='<option value="">Todos</option><option value="__GLOBAL__">Só gerais</option>';
+    (S.agencias||[]).forEach(a=>{
+      const o=document.createElement('option');o.value=a.id;o.textContent=a.id+' — '+a.nom;sel.appendChild(o);
+    });
+  }else if(selId==='trajet-hotel'){
+    sel.innerHTML='<option value="">— Selecionar hotel —</option>';
+    (S.agencias||[]).forEach(a=>{
+      const o=document.createElement('option');o.value=a.id;o.textContent=a.id+' — '+a.nom;sel.appendChild(o);
+    });
+  }else{
+    keep.forEach(k=>{
+      const o=document.createElement('option');o.value=k.v;o.textContent=k.t;sel.appendChild(o);
+    });
+  }
+  if(prev)sel.value=prev;
+}
+function hotelLabel_(id){
+  if(!id)return 'Geral';
+  const a=(S.agencias||[]).find(x=>x.id===id);
+  return a?(a.id+' — '+a.nom):id;
+}
+
+async function fetchLieuxList(opts){
   try{
-    const d=await api({action:'getListaLieux',adminToken:S.token,_t:Date.now()},{timeoutMs:45000});
+    const filter=(opts&&opts.filterAgencyId!==undefined)
+      ? opts.filterAgencyId
+      : (document.getElementById('lieux-filter-hotel')?.value||'');
+    const payload={action:'getListaLieux',adminToken:S.token,_t:Date.now()};
+    if(filter) payload.filterAgencyId=filter;
+    const d=await api(payload,{timeoutMs:45000});
     if(!d.success){
       if(d.sessionExpired) doLogout();
       return false;
@@ -3666,7 +3862,8 @@ async function fetchLieuxList(){
 }
 
 async function loadLieuxForCreate(){
-  await fetchLieuxList();
+  // Tous les lieux (généraux + par hôtel) pour filtrer côté UI selon cr-ag
+  await fetchLieuxList({filterAgencyId:''});
   ensureCreateLieuSelects();
   onOrigChange();
 }
@@ -3674,6 +3871,7 @@ async function loadLieuxForCreate(){
 async function loadLieuxTab(){
   const wrap=document.getElementById('lieux-wrap');
   if(!wrap) return;
+  fillHotelSelectOptions_('lieux-filter-hotel');
   wrap.innerHTML='<div class="loader"><div class="loader-ring"></div><p>A carregar…</p></div>';
   const ok=await fetchLieuxList();
   if(!ok){
@@ -3681,14 +3879,14 @@ async function loadLieuxTab(){
     return;
   }
   if(!S.lieux.length){
-    wrap.innerHTML='<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">Nenhum lugar</div><div class="empty-sub">Os lugares por defeito serão criados no servidor. Clique em ➕ para adicionar.</div></div>';
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">📍</div><div class="empty-title">Nenhum lugar</div><div class="empty-sub">Clique em ➕ Lugar geral ou 🏨 Trajeto hotel.</div></div>';
     return;
   }
   const typeLbl={ambos:'Partida e destino',depart:'Só partida',arrivee:'Só destino'};
   const frag=document.createDocumentFragment();
   const table=document.createElement('table');
   const thead=document.createElement('thead');
-  thead.innerHTML='<tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Morada</th><th>Ordem</th><th>Estado</th><th>Ações</th></tr>';
+  thead.innerHTML='<tr><th>ID</th><th>Nome</th><th>Tipo</th><th>Hotel</th><th>Morada</th><th>Ordem</th><th>Estado</th><th>Ações</th></tr>';
   table.appendChild(thead);
   const tbody=document.createElement('tbody');
   S.lieux.forEach(l=>{
@@ -3698,6 +3896,7 @@ async function loadLieuxTab(){
       <td class="mono">${escHtml(l.id)}</td>
       <td class="bold">${escHtml(l.nom)}</td>
       <td style="font-size:12px">${escHtml(typeLbl[l.type]||l.type||'ambos')}</td>
+      <td style="font-size:12px">${escHtml(hotelLabel_(l.agencyId))}</td>
       <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escAttr(l.adresse||'')}">${escHtml(l.adresse||'—')}</td>
       <td>${l.ordre!=null?l.ordre:'—'}</td>
       <td><span class="badge ${l.actif!==false?'b-conf':'b-canc'}">${l.actif!==false?'● Ativo':'○ Inativo'}</span></td>
@@ -3713,6 +3912,13 @@ async function loadLieuxTab(){
   wrap.appendChild(frag);
 }
 
+function fillLieuAgencySelect_(selected){
+  fillHotelSelectOptions_('lieu-agency', true);
+  const sel=document.getElementById('lieu-agency');
+  if(sel&&selected!=null) sel.value=selected||'';
+}
+function onLieuAgencyChange(){}
+
 function openAddLieuModal(){
   document.getElementById('lbl-lieu-modal-ttl').textContent='➕ Adicionar lugar';
   document.getElementById('lieu-msg').className='modal-msg';
@@ -3722,6 +3928,7 @@ function openAddLieuModal(){
   document.getElementById('lieu-actif').value='actif';
   document.getElementById('lieu-ordre').value='100';
   document.getElementById('lieu-adresse').value='';
+  fillLieuAgencySelect_('');
   openModal('ov-lieu');
 }
 
@@ -3736,6 +3943,7 @@ function openEditLieuModal(id){
   document.getElementById('lieu-actif').value=l.actif===false?'inactif':'actif';
   document.getElementById('lieu-ordre').value=l.ordre!=null?l.ordre:100;
   document.getElementById('lieu-adresse').value=l.adresse||'';
+  fillLieuAgencySelect_(l.agencyId||'');
   openModal('ov-lieu');
 }
 
@@ -3749,7 +3957,8 @@ async function doSaveLieu(){
     type:document.getElementById('lieu-type').value,
     actif:document.getElementById('lieu-actif').value,
     ordre:document.getElementById('lieu-ordre').value,
-    adresse:document.getElementById('lieu-adresse').value.trim()
+    adresse:document.getElementById('lieu-adresse').value.trim(),
+    agencyId:document.getElementById('lieu-agency')?.value||''
   };
   try{
     const d=await api({action:'salvarLieuERP',adminToken:S.token,lieu},{timeoutMs:45000});
@@ -3780,12 +3989,64 @@ async function doDeleteLieu(id){
   }catch(e){toast('❌ '+e.message,'error');}
 }
 
+function openAddTrajetHotelModal(){
+  if(!(S.agencias||[]).length){
+    toast('Carregue / crie um hotel primeiro','warn');
+    return;
+  }
+  document.getElementById('trajet-msg').className='modal-msg';
+  fillHotelSelectOptions_('trajet-hotel');
+  ['trajet-dep-nom','trajet-dep-addr','trajet-dest-nom','trajet-dest-addr','trajet-prix'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.value='';
+  });
+  document.getElementById('trajet-veh').value='Sedan';
+  document.getElementById('trajet-pax-min').value='1';
+  document.getElementById('trajet-pax-max').value='99';
+  openModal('ov-trajet-hotel');
+}
+
+async function doSaveTrajetHotel(){
+  const hotelId=document.getElementById('trajet-hotel').value.trim();
+  const depNom=document.getElementById('trajet-dep-nom').value.trim();
+  const destNom=document.getElementById('trajet-dest-nom').value.trim();
+  if(!hotelId){showMsgEl('trajet-msg','❌ Selecione o hotel','error');return;}
+  if(!depNom||!destNom){showMsgEl('trajet-msg','❌ Partida e destino obrigatórios','error');return;}
+  const trajet={
+    hotelId,
+    departNom:depNom,
+    departAdresse:document.getElementById('trajet-dep-addr').value.trim(),
+    destNom,
+    destAdresse:document.getElementById('trajet-dest-addr').value.trim(),
+    prix:document.getElementById('trajet-prix').value.trim(),
+    vehicule:document.getElementById('trajet-veh').value.trim()||'Sedan',
+    paxMin:document.getElementById('trajet-pax-min').value||1,
+    paxMax:document.getElementById('trajet-pax-max').value||99
+  };
+  try{
+    const d=await api({action:'salvarTrajetHotelERP',adminToken:S.token,trajet},{timeoutMs:45000});
+    if(d.success){
+      toast('🏨 Trajeto hotel guardado'+(trajet.prix?' (+ preço)':''),'success');
+      closeModal('ov-trajet-hotel');
+      await loadLieuxTab();
+      loadPrices();
+      ensureCreateLieuSelects();
+    }else{
+      if(d.sessionExpired) doLogout();
+      showMsgEl('trajet-msg','❌ '+(d.error||'Erro'),'error');
+    }
+  }catch(e){showMsgEl('trajet-msg','❌ '+e.message,'error');}
+}
+
 async function loadPrices(){
   const wrap=document.getElementById('pr-wrap');
   const L=t();
+  fillHotelSelectOptions_('pr-filter-hotel');
   wrap.innerHTML=`<div class="loader"><div class="loader-ring"></div><p>${L.loadingTxt}</p></div>`;
   try{
-    const d=await api({action:'getListaPrices',adminToken:S.token,_t:Date.now()});
+    const filter=document.getElementById('pr-filter-hotel')?.value||'';
+    const payload={action:'getListaPrices',adminToken:S.token,_t:Date.now()};
+    if(filter) payload.filterAgencyId=filter;
+    const d=await api(payload);
     if(!d.success)return;
     S.prices=d.prices||[];
     S._priceIndex=null;
@@ -3796,14 +4057,18 @@ async function loadPrices(){
     const frag=document.createDocumentFragment();
     const table=document.createElement('table');
     const thead=document.createElement('thead');
-    thead.innerHTML=`<tr><th>${L.prThFrom}</th><th>${L.prThTo}</th><th>${L.prThVehicle}</th><th>${L.prThPaxMin||'Pax min'}</th><th>${L.prThPaxMax||'Pax max'}</th><th>${L.prThPrice}</th></tr>`;
+    thead.innerHTML=`<tr><th>${L.prThFrom}</th><th>${L.prThTo}</th><th>Hotel</th><th>${L.prThVehicle}</th><th>${L.prThPaxMin||'Pax min'}</th><th>${L.prThPaxMax||'Pax max'}</th><th>${L.prThPrice}</th><th>Ações</th></tr>`;
     table.appendChild(thead);
     const tbody=document.createElement('tbody');
-    S.prices.forEach(p=>{
+    S.prices.forEach((p,idx)=>{
       const tr=document.createElement('tr');
       const pMin=p.paxMin!=null&&p.paxMin!==''?p.paxMin:'1';
       const pMax=p.paxMax!=null&&p.paxMax!==''?p.paxMax:'99';
-      tr.innerHTML=`<td class="bold">${p.de}</td><td>${p.pour}</td><td>${p.vehicule||'Sedan'}</td><td>${pMin}</td><td>${pMax}</td><td><strong style="color:var(--gold)">${p.prix} €</strong></td>`;
+      tr.innerHTML=`<td class="bold">${escHtml(p.de)}</td><td>${escHtml(p.pour)}</td><td style="font-size:12px">${escHtml(hotelLabel_(p.agencyId))}</td><td>${escHtml(p.vehicule||'Sedan')}</td><td>${pMin}</td><td>${pMax}</td><td><strong style="color:var(--gold)">${escHtml(p.prix)} €</strong></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-gold btn-sm" onclick="openEditPriceModal(${idx})">✏️</button>
+          <button class="btn btn-ghost btn-sm" onclick="doDeletePrice(${idx})">🗑</button>
+        </td>`;
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
@@ -3811,6 +4076,92 @@ async function loadPrices(){
     wrap.innerHTML='';
     wrap.appendChild(frag);
   }catch(e){dbg('err','loadPrices: '+e.message);}
+}
+
+function fillPriceAgencySelect_(selected){
+  const sel=document.getElementById('pr-agency');if(!sel)return;
+  sel.innerHTML='<option value="">Geral (todos)</option>';
+  (S.agencias||[]).forEach(a=>{
+    const o=document.createElement('option');o.value=a.id;o.textContent=a.id+' — '+a.nom;sel.appendChild(o);
+  });
+  if(selected!=null) sel.value=selected||'';
+}
+
+function openAddPriceModal(){
+  S.curPriceIsNew=true;
+  S.curPriceSheetRow=null;
+  document.getElementById('pr-modal-ttl').textContent='➕ Adicionar preço';
+  document.getElementById('pr-msg').className='modal-msg';
+  document.getElementById('pr-sheet-row').value='';
+  document.getElementById('pr-de').value='';
+  document.getElementById('pr-pour').value='';
+  document.getElementById('pr-veh').value='Sedan';
+  document.getElementById('pr-prix').value='';
+  document.getElementById('pr-pax-min').value='1';
+  document.getElementById('pr-pax-max').value='99';
+  fillPriceAgencySelect_('');
+  openModal('ov-price');
+}
+
+function openEditPriceModal(idx){
+  const p=S.prices[idx];if(!p)return;
+  S.curPriceIsNew=false;
+  S.curPriceSheetRow=p.sheetRow||null;
+  document.getElementById('pr-modal-ttl').textContent='✏️ Editar preço';
+  document.getElementById('pr-msg').className='modal-msg';
+  document.getElementById('pr-sheet-row').value=p.sheetRow||'';
+  document.getElementById('pr-de').value=p.de||'';
+  document.getElementById('pr-pour').value=p.pour||'';
+  document.getElementById('pr-veh').value=p.vehicule||'Sedan';
+  document.getElementById('pr-prix').value=p.prix||'';
+  document.getElementById('pr-pax-min').value=p.paxMin!=null?p.paxMin:1;
+  document.getElementById('pr-pax-max').value=p.paxMax!=null?p.paxMax:99;
+  fillPriceAgencySelect_(p.agencyId||'');
+  openModal('ov-price');
+}
+
+async function doSavePrice(){
+  const de=document.getElementById('pr-de').value.trim();
+  const pour=document.getElementById('pr-pour').value.trim();
+  const prix=document.getElementById('pr-prix').value.trim();
+  if(!de||!pour){showMsgEl('pr-msg','❌ De e Para obrigatórios','error');return;}
+  if(prix===''||isNaN(parseFloat(prix))){showMsgEl('pr-msg','❌ Preço inválido','error');return;}
+  const price={
+    de,pour,
+    vehicule:document.getElementById('pr-veh').value.trim()||'Sedan',
+    prix,
+    paxMin:document.getElementById('pr-pax-min').value||1,
+    paxMax:document.getElementById('pr-pax-max').value||99,
+    agencyId:document.getElementById('pr-agency').value||''
+  };
+  const payload={
+    action:'salvarPrecoERP',
+    adminToken:S.token,
+    price,
+    isNew:!!S.curPriceIsNew
+  };
+  if(S.curPriceSheetRow) payload.sheetRow=S.curPriceSheetRow;
+  try{
+    const d=await api(payload,{timeoutMs:45000});
+    if(d.success){
+      toast('💰 Preço guardado','success');
+      closeModal('ov-price');
+      loadPrices();
+    }else{
+      if(d.sessionExpired) doLogout();
+      showMsgEl('pr-msg','❌ '+(d.error||'Erro'),'error');
+    }
+  }catch(e){showMsgEl('pr-msg','❌ '+e.message,'error');}
+}
+
+async function doDeletePrice(idx){
+  const p=S.prices[idx];if(!p)return;
+  if(!confirm('Eliminar este preço?'))return;
+  try{
+    const d=await api({action:'supprimerPrecoERP',adminToken:S.token,sheetRow:p.sheetRow},{timeoutMs:45000});
+    if(d.success){toast('🗑 Preço eliminado','success');loadPrices();}
+    else{if(d.sessionExpired)doLogout();toast('❌ '+(d.error||'Erro'),'error');}
+  }catch(e){toast('❌ '+e.message,'error');}
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -4439,45 +4790,13 @@ async function openDetail(id){
     calBox.style.display=(rDate>=today&&r.statut!=='cancelado'&&r.statut!=='realizado')?'block':'none';
   }catch(e){calBox.style.display='none';}
 
-  // ── WA → Agência ──
+  // WA hôtel (pedir confirmação) masqué : l'hôtel demande ; l'agence confirme dans l'app
   const agWaBox=document.getElementById('ag-wa-box');
+  if(agWaBox){agWaBox.style.display='none';agWaBox.hidden=true;}
   S.curWaTel='';
   S.curAgWa=null;
-  try{
-    if(r.agencyId){
-      const agData=await api({action:'getAgenciaContatos',adminToken:S.token,agencyId:r.agencyId});
-      if(agData.success){
-        let ag=agData.agencia;
-        const raw=agData.telefoneWhatsapp||agData.telefoneWA||(ag&&ag.telefoneWhatsapp)||'';
-        if(raw){
-          const p=parseWaCampoAgenciaClient(raw);
-          if(!ag){
-            ag={telefoneWhatsapp:raw,useWA:agData.useWA,whatsappGroupUrl:p.groupUrl,whatsappNumerosWaMe:p.numeros,whatsappNumerosAffiche:p.disp};
-          }else{
-            if(p.groupUrl) ag.whatsappGroupUrl=ag.whatsappGroupUrl||p.groupUrl;
-            if((!ag.whatsappNumerosWaMe||!ag.whatsappNumerosWaMe.length)&&p.numeros.length){
-              ag.whatsappNumerosWaMe=p.numeros;
-              ag.whatsappNumerosAffiche=p.disp;
-            }
-          }
-        }
-        if(ag&&ag.whatsappGroupUrl) ag.whatsappGroupUrl=canonicalWaGroupInviteUrl(ag.whatsappGroupUrl);
-        const useWa=ag?.useWA||ag?.useWhatsapp||agData.useWA||'nao';
-        if(useWa!=='sim'&&useWa!=='SIM'){agWaBox.style.display='none';}
-        else{
-          S.curAgWa=ag;
-          S.curWaTel=(ag.whatsappNumerosWaMe&&ag.whatsappNumerosWaMe[0])?ag.whatsappNumerosWaMe[0]:'';
-          document.getElementById('ag-wa-phone-info').textContent=formatAgWaSummaryFromAg(ag);
-          renderAgWaTargets(ag);
-          setupAgWaModeFromAg(ag);
-          agWaBox.style.display='block';
-          genAgWaMsg('pt');
-        }
-      }else{agWaBox.style.display='none';}
-    }else{agWaBox.style.display='none';}
-  }catch(e){agWaBox.style.display='none';}
 
-  // ── Chauffeur atribuído (NOUVEAU) ──
+  // ── Chauffeur atribuído ──
   try{
     if(!S.chauffeurs.length) await loadChauffeurs();
     const chSel=document.getElementById('d-chauffeur-sel');
@@ -5177,7 +5496,14 @@ function setCrLieuSelect_(which,nom){
 }
 
 function lieuxForRole_(role){
-  const list=(S.lieux||[]).filter(l=>l.actif!==false && !/agence\s*ruelas/i.test(l.nom||''));
+  const hotelId=document.getElementById('cr-ag')?.value||'';
+  const list=(S.lieux||[]).filter(l=>{
+    if(l.actif===false) return false;
+    if(/agence\s*ruelas/i.test(l.nom||'')) return false;
+    // Généraux toujours ; spécifiques seulement si hôtel sélectionné
+    if(!l.agencyId) return true;
+    return !!hotelId && l.agencyId===hotelId;
+  });
   return list.filter(l=>{
     const t=l.type||'ambos';
     if(role==='depart') return t==='depart'||t==='ambos';
@@ -5272,16 +5598,27 @@ function matchPricePax(p,pax){
   const hi=(p.paxMax===''||p.paxMax==null)?99:(parseFloat(p.paxMax)||99);
   return pax>=lo&&pax<=hi;
 }
-function findTarif(prices,de,dest,paxVal){
+function findTarif(prices,de,dest,paxVal,hotelId){
   if(!de||!dest||!paxVal)return null;
   const pax=parsePaxUi(paxVal);
-  return (prices||[]).find(p=>matchPriceRoute(p,de,dest)&&matchPricePax(p,pax))||null;
+  const list=prices||[];
+  const hid=hotelId||'';
+  if(hid){
+    const hotelHit=list.find(p=>p.agencyId===hid&&matchPriceRoute(p,de,dest)&&matchPricePax(p,pax));
+    if(hotelHit) return hotelHit;
+    const hotelAny=list.find(p=>p.agencyId===hid&&matchPriceRoute(p,de,dest));
+    if(hotelAny) return hotelAny;
+  }
+  const global=list.find(p=>!p.agencyId&&matchPriceRoute(p,de,dest)&&matchPricePax(p,pax));
+  if(global) return global;
+  return list.find(p=>!p.agencyId&&matchPriceRoute(p,de,dest))||null;
 }
 
 function autoPrix(){
   const de=getCrLieuValue('depart');
   const dest=getCrLieuValue('dest');
   const paxVal=getCrCountValue('cr-pax');
+  const hotelId=document.getElementById('cr-ag')?.value||'';
   const hint=document.getElementById('cr-prix-hint');
   const prixEl=document.getElementById('cr-prix');
   const tx=t();
@@ -5291,11 +5628,12 @@ function autoPrix(){
     if(hint)hint.textContent=tx.prixAutoNeedPax||'Indiquez le nombre de personnes pour le prix automatique.';
     return;
   }
-  const prix=findTarif(S.prices,de,dest,paxVal);
+  const prix=findTarif(S.prices,de,dest,paxVal,hotelId);
   if(prix){
     if(prixEl)prixEl.value=prix.prix;
     const paxLbl=(prix.paxMin||'1')+'–'+(prix.paxMax||'99');
-    if(hint)hint.textContent=tx.prixAutoOk+prix.de.slice(0,22)+' → '+prix.pour.slice(0,22)+' ('+(prix.vehicule||'Sedan')+', '+paxLbl+' pax)';
+    const scope=prix.agencyId?(' ['+prix.agencyId+']'):'';
+    if(hint)hint.textContent=tx.prixAutoOk+prix.de.slice(0,22)+' → '+prix.pour.slice(0,22)+' ('+(prix.vehicule||'Sedan')+', '+paxLbl+' pax)'+scope;
   }else{
     if(prixEl)prixEl.value='';
     if(hint)hint.textContent=tx.prixAutoNone;
@@ -5765,33 +6103,204 @@ function exportBilanPrint(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// EXPORTS — OPTIMISÉS
+// EXPORTS — OPTIMISÉS (Agence : choix do âmbito + colunas)
 // ═══════════════════════════════════════════════════════════
-function exportCSV(){
-  const data=getFiltered();if(!data.length){toast('Aucune réservation','error');return;}
-  const hdrs=['Réf.','Client','Email','Téléphone','OTA','Date','Heure','Départ','Adresse départ','Destination','Adresse dest.','Pax','Malas','Vol','Transport','Prix','Statut','Agence','Paiement','Commentaires'];
-  const rows=data.map(r=>[r.id,r.clientNom,r.clientEmail,r.telephone,r.numReservaOta,fmtD(r.dateTransfer),r.heureTransfer,r.pointDepart,r.adresseDepart||'',r.destination,r.adresseDestination||'',r.personnes,r.malas,r.numVol||'',r.numTransport||'',r.prixFinal?r.prixFinal+'€':'',r.statut,r.agencyId||'',r.statutPaiement,r.commentaires]);
-  downloadCSV([hdrs,...rows],'NL_ERP_'+new Date().toISOString().slice(0,10));
+const EXP_COL_DEFS=[
+  {id:'id',lab:'Réf.',get:r=>r.id||''},
+  {id:'client',lab:'Client',get:r=>r.clientNom||''},
+  {id:'email',lab:'Email',get:r=>r.clientEmail||''},
+  {id:'tel',lab:'Téléphone',get:r=>r.telephone||''},
+  {id:'ota',lab:'OTA',get:r=>r.numReservaOta||''},
+  {id:'date',lab:'Date',get:r=>fmtD(r.dateTransfer)},
+  {id:'heure',lab:'Heure',get:r=>r.heureTransfer||''},
+  {id:'depart',lab:'Départ',get:r=>r.pointDepart||''},
+  {id:'addrDep',lab:'Adresse départ',get:r=>r.adresseDepart||''},
+  {id:'dest',lab:'Destination',get:r=>r.destination||''},
+  {id:'addrDest',lab:'Adresse dest.',get:r=>r.adresseDestination||''},
+  {id:'pax',lab:'Pax',get:r=>r.personnes||''},
+  {id:'malas',lab:'Malas',get:r=>r.malas||''},
+  {id:'vol',lab:'Vol',get:r=>r.numVol||''},
+  {id:'transport',lab:'Transport',get:r=>r.numTransport||''},
+  {id:'prix',lab:'Prix',get:r=>r.prixFinal?r.prixFinal+' €':''},
+  {id:'statut',lab:'Statut',get:r=>r.statut||''},
+  {id:'hotel',lab:'Hôtel / Agence',get:r=>agDisplayLabel(r.agencyId)},
+  {id:'paiement',lab:'Paiement',get:r=>r.statutPaiement||''},
+  {id:'chauffeur',lab:'Motorista',get:r=>{
+    const id=r.chauffeurId||'';
+    if(!id) return '';
+    const ch=(S.chauffeurs||[]).find(c=>c.chauffeurId===id);
+    return ch?(ch.nom+(ch.telephone?' · '+ch.telephone:'')):id;
+  }},
+  {id:'creePar',lab:'Criado por',get:r=>r.criadoPor||r.creePar||''},
+  {id:'comments',lab:'Commentaires',get:r=>r.commentaires||''}
+];
+const EXP_COLS_DEFAULT=['id','client','email','tel','date','heure','depart','dest','pax','prix','statut','hotel','chauffeur','paiement'];
+
+function isAgencyOwnResa_(r){
+  const id=String(r.agencyId||'').trim();
+  return id==='__AGENCE__'||(CFG&&CFG.HOTEL_DIRECT_ID&&id===CFG.HOTEL_DIRECT_ID);
+}
+function isUnassignedResa_(r){
+  return !String(r.agencyId||'').trim();
+}
+function isHotelResa_(r){
+  const id=String(r.agencyId||'').trim();
+  if(!id) return false;
+  if(id==='__AGENCE__') return false;
+  if(CFG&&CFG.HOTEL_DIRECT_ID&&id===CFG.HOTEL_DIRECT_ID) return false;
+  return true;
 }
 
-function exportExcel(){
-  const data=getFiltered();if(!data.length){toast('Aucune réservation','error');return;}
-  const hdrs=['Réf.','Client','Date','Heure','Départ','Destination','Pax','Prix','Statut','Agence'];
-  const rows=data.map(r=>[r.id,r.clientNom,fmtD(r.dateTransfer),r.heureTransfer,r.pointDepart,r.destination,r.personnes,r.prixFinal?r.prixFinal+' €':'',r.statut,r.agencyId||'']);
-  downloadExcel([hdrs,...rows],'NL_ERP_'+new Date().toISOString().slice(0,10),'Reservations');
-  toast('📥 Excel exporté','success');
+async function openExportModal(format){
+  S.expFormat=format||'excel';
+  document.getElementById('exp-format').value=S.expFormat;
+  const ttl={csv:'⬇ Export CSV',excel:'⬇ Export Excel',pdf:'⬇ Export PDF / Impression'}[S.expFormat]||'⬇ Exportar relatório';
+  document.getElementById('exp-modal-ttl').textContent=ttl;
+  document.getElementById('exp-msg').className='modal-msg';
+  document.getElementById('exp-sel-count').textContent=String(S.selectedIds?.size||0);
+  const selRadio=document.getElementById('exp-src-selected');
+  if(selRadio) selRadio.disabled=!(S.selectedIds&&S.selectedIds.size);
+  document.querySelectorAll('input[name="exp-source"]').forEach(r=>{
+    if(r.value==='filtered') r.checked=true;
+  });
+  // Hotels list
+  const box=document.getElementById('exp-hotels-list');
+  if(box){
+    box.innerHTML=(S.agencias||[]).map(a=>
+      `<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="exp-hotel-cb" value="${escAttr(a.id)}" checked> ${escHtml(a.id)} — ${escHtml(a.nom)}</label>`
+    ).join('')||'<span style="color:var(--ts)">Nenhum hotel</span>';
+  }
+  document.getElementById('exp-scope-hotels').checked=true;
+  document.getElementById('exp-scope-own').checked=true;
+  document.getElementById('exp-scope-unassigned').checked=true;
+  // Columns
+  const cols=document.getElementById('exp-cols');
+  if(cols){
+    cols.innerHTML=EXP_COL_DEFS.map(c=>{
+      const on=EXP_COLS_DEFAULT.includes(c.id);
+      return `<label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" class="exp-col-cb" value="${c.id}" ${on?'checked':''}> ${escHtml(c.lab)}</label>`;
+    }).join('');
+  }
+  if(!(S.chauffeurs||[]).length){ try{await loadChauffeurs();}catch(e){} }
+  fillExportChauffeurSelect_();
+  syncExportSourceUi();
+  updateExportPreviewCount();
+  openModal('ov-export');
+}
+function fillExportChauffeurSelect_(){
+  const sel=document.getElementById('exp-chauffeur');
+  if(!sel) return;
+  let html='<option value="all">Todos</option>'
+    +'<option value="with">Só com motorista atribuído</option>'
+    +'<option value="without">Só sem motorista</option>';
+  (S.chauffeurs||[]).forEach(c=>{
+    html+=`<option value="id:${escAttr(c.chauffeurId)}">${escHtml(c.nom||c.chauffeurId)}${c.telephone?' · '+escHtml(c.telephone):''}</option>`;
+  });
+  sel.innerHTML=html;
+  sel.value='all';
 }
 
-function imprimerListe(){
-  const data=getFiltered();if(!data.length){toast('Aucune réservation','error');return;}
-  let h=`<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}h1{background:#0D2137;color:#C9A84C;padding:14px;text-align:center;margin:0 0 4px}h2{font-size:10px;color:#6B7280;text-align:right;margin:0 0 14px}table{width:100%;border-collapse:collapse}th{background:#0D2137;color:#C9A84C;padding:7px 10px;font-size:10px;text-align:left}td{padding:7px 10px;border-bottom:1px solid #E5EDF5;font-size:11px}tr:nth-child(even)td{background:#F7F9FB}.footer{margin-top:14px;text-align:center;font-size:9px;color:#9CA3AF}
+function syncExportSourceUi(){
+  const src=document.querySelector('input[name="exp-source"]:checked')?.value||'filtered';
+  const wrap=document.getElementById('exp-custom-wrap');
+  if(wrap) wrap.style.display=src==='custom'?'block':'none';
+  syncExportHotelsUi();
+  updateExportPreviewCount();
+}
+function syncExportHotelsUi(){
+  const on=document.getElementById('exp-scope-hotels')?.checked;
+  const list=document.getElementById('exp-hotels-list');
+  if(list) list.style.opacity=on?1:.45;
+  list?.querySelectorAll('input').forEach(cb=>{cb.disabled=!on;});
+  updateExportPreviewCount();
+}
+function setExportColsAll(on){
+  document.querySelectorAll('.exp-col-cb').forEach(cb=>{cb.checked=!!on;});
+  updateExportPreviewCount();
+}
+function getSelectedExportCols_(){
+  return EXP_COL_DEFS.filter(c=>{
+    const el=document.querySelector('.exp-col-cb[value="'+c.id+'"]');
+    return el&&el.checked;
+  });
+}
+function getExportRows_(){
+  const src=document.querySelector('input[name="exp-source"]:checked')?.value||'filtered';
+  let rows=[];
+  if(src==='selected'){
+    rows=(S.reservas||[]).filter(r=>S.selectedIds&&S.selectedIds.has(r.id));
+  }else if(src==='custom'){
+    const wantHotels=!!document.getElementById('exp-scope-hotels')?.checked;
+    const wantOwn=!!document.getElementById('exp-scope-own')?.checked;
+    const wantUn=!!document.getElementById('exp-scope-unassigned')?.checked;
+    const hotelIds=new Set(
+      [...document.querySelectorAll('.exp-hotel-cb:checked')].map(cb=>cb.value)
+    );
+    rows=(S.reservas||[]).filter(r=>{
+      if(isUnassignedResa_(r)) return wantUn;
+      if(isAgencyOwnResa_(r)) return wantOwn;
+      if(isHotelResa_(r)) return wantHotels && hotelIds.has(String(r.agencyId));
+      return false;
+    });
+  }else{
+    rows=getFiltered();
+  }
+  const chMode=document.getElementById('exp-chauffeur')?.value||'all';
+  if(chMode==='with') rows=rows.filter(r=>!!String(r.chauffeurId||'').trim());
+  else if(chMode==='without') rows=rows.filter(r=>!String(r.chauffeurId||'').trim());
+  else if(chMode.indexOf('id:')===0){
+    const cid=chMode.slice(3);
+    rows=rows.filter(r=>String(r.chauffeurId||'')===cid);
+  }
+  return rows;
+}
+function updateExportPreviewCount(){
+  const n=getExportRows_().length;
+  const cols=getSelectedExportCols_().length;
+  const el=document.getElementById('exp-preview-count');
+  if(el) el.textContent=n+' reserva(s) · '+cols+' coluna(s)';
+}
+document.addEventListener('change',e=>{
+  if(e.target&&(e.target.classList.contains('exp-col-cb')||e.target.classList.contains('exp-hotel-cb')||e.target.id==='exp-chauffeur'||e.target.id==='exp-scope-own'||e.target.id==='exp-scope-unassigned')){
+    updateExportPreviewCount();
+  }
+});
 
-</style></head><body>
+function doConfirmExport(){
+  const format=document.getElementById('exp-format')?.value||S.expFormat||'excel';
+  const cols=getSelectedExportCols_();
+  if(!cols.length){showMsgEl('exp-msg','❌ Selecione pelo menos uma coluna','error');return;}
+  const data=getExportRows_();
+  if(!data.length){showMsgEl('exp-msg','❌ Nenhuma reserva corresponde a esta seleção','error');return;}
+  const hdrs=cols.map(c=>c.lab);
+  const rows=data.map(r=>cols.map(c=>c.get(r)));
+  closeModal('ov-export');
+  const stamp=new Date().toISOString().slice(0,10);
+  if(format==='csv'){
+    downloadCSV([hdrs,...rows],'RU_ERP_'+stamp);
+  }else if(format==='excel'){
+    downloadExcel([hdrs,...rows],'RU_ERP_'+stamp,'Reservations');
+    toast('📥 Excel exporté ('+data.length+')','success');
+  }else{
+    imprimerListeData_(data,cols);
+  }
+}
+
+function exportCSV(){ openExportModal('csv'); }
+function exportExcel(){ openExportModal('excel'); }
+function imprimerListe(){ openExportModal('pdf'); }
+
+function imprimerListeData_(data,cols){
+  if(!data.length){toast('Aucune réservation','error');return;}
+  const useCols=cols&&cols.length?cols:EXP_COL_DEFS.filter(c=>EXP_COLS_DEFAULT.includes(c.id));
+  let h=`<html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;font-size:11px;padding:20px}h1{background:#0D2137;color:#C9A84C;padding:14px;text-align:center;margin:0 0 4px}h2{font-size:10px;color:#6B7280;text-align:right;margin:0 0 14px}table{width:100%;border-collapse:collapse}th{background:#0D2137;color:#C9A84C;padding:7px 10px;font-size:10px;text-align:left}td{padding:7px 10px;border-bottom:1px solid #E5EDF5;font-size:11px}tr:nth-child(even)td{background:#F7F9FB}.footer{margin-top:14px;text-align:center;font-size:9px;color:#9CA3AF}</style></head><body>
   <h1>Agence Ruelas — ERP Transfers</h1>
   <h2>${new Date().toLocaleDateString()} · ${data.length} réservations</h2>
-  <table><thead><tr><th>Réf.</th><th>Client</th><th>Date</th><th>H.</th><th>Type</th><th>Départ</th><th>Destination</th><th>Pax</th><th>Prix</th><th>Statut</th><th>Agence</th></tr></thead><tbody>`;
-  data.forEach(r=>{const ico={airport:'✈️',hotel:'🏨',train:'🚂',bus:'🚌',highspeed:'🚄'}[r.origineType]||'🚗';h+=`<tr><td>${r.id}</td><td>${r.clientNom||'—'}</td><td>${fmtD(r.dateTransfer)}</td><td>${r.heureTransfer||'—'}</td><td>${ico}</td><td>${r.pointDepart||'—'}</td><td>${r.destination||'—'}</td><td>${r.personnes||'—'}</td><td>${r.prixFinal?r.prixFinal+'€':'—'}</td><td>${r.statut}</td><td>${r.agencyId||'—'}</td></tr>`;});
-  h+=`</tbody></table><div class="footer">Agence Ruelas · sigagomesafonso@gmail.com · ${new Date().toLocaleString()}</div></body></html>`;
+  <table><thead><tr>${useCols.map(c=>'<th>'+escHtml(c.lab)+'</th>').join('')}</tr></thead><tbody>`;
+  data.forEach(r=>{
+    h+='<tr>'+useCols.map(c=>'<td>'+escHtml(c.get(r)||'—')+'</td>').join('')+'</tr>';
+  });
+  h+=`</tbody></table><div class="footer">Agence Ruelas · ${new Date().toLocaleString()}</div></body></html>`;
   const w=window.open('','_blank');if(!w){toast('Pop-up bloqué','error');return;}
   w.document.write(h);w.document.close();w.print();
   toast('🖨️ Impression','success');
@@ -6026,8 +6535,44 @@ function formatPermsBadges(p){
   return '<span style="font-size:10px;color:var(--ts)">'+bits.join(' · ')+'</span>';
 }
 
+/** Compte Agence à accès complet — seul habilité à voir/changer MDP hôtels. */
+function staffPeutGererMdpHotels_(){
+  if(!S.token) return false;
+  if(S.fullAccess===false) return false;
+  const id=S.adminId||'';
+  return !id || id==='AGENCE_ADMIN' || id==='HOTEL_ADMIN';
+}
+function toggleHotelPassCell(btn){
+  if(!staffPeutGererMdpHotels_()){toast('Acesso completo Agence necessário para ver a palavra-passe.','warn');return;}
+  const span=btn && btn.parentElement && btn.parentElement.querySelector('.ag-pw-mask');
+  if(!span)return;
+  const shown=span.getAttribute('data-shown')==='1';
+  if(shown){
+    span.textContent='••••••••';
+    span.setAttribute('data-shown','0');
+    btn.textContent='👁';
+  }else{
+    span.textContent=span.getAttribute('data-pw')||'—';
+    span.setAttribute('data-shown','1');
+    btn.textContent='🙈';
+  }
+}
+function toggleAgenceHotelPassField(){
+  if(!staffPeutGererMdpHotels_()){toast('Acesso completo Agence necessário.','warn');return;}
+  const inp=document.getElementById('ag-new-pass');
+  const btn=document.getElementById('btn-ag-pass-toggle');
+  if(!inp)return;
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  if(btn)btn.textContent=show?'🙈':'👁';
+}
+
 function openAddAgenceModal(){
   ['ag-new-id','ag-new-nom','ag-new-email','ag-new-pass','ag-new-wa','ag-new-meth-libre','ag-new-adresse'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const passInp=document.getElementById('ag-new-pass');
+  if(passInp){passInp.type='password';passInp.readOnly=!staffPeutGererMdpHotels_();}
+  const passBtn=document.getElementById('btn-ag-pass-toggle');
+  if(passBtn){passBtn.textContent='👁';passBtn.disabled=!staffPeutGererMdpHotels_();}
   document.getElementById('ag-new-use-wa').value='sim';document.getElementById('ag-new-lang').value='PT';
   document.getElementById('ag-new-email-notif').value='sim';
   document.getElementById('ag-new-meth').value='virement';document.getElementById('ag-new-statut').value='actif';
@@ -6050,6 +6595,10 @@ function openEditAgenceModal(id){
   if(_idEl)_idEl.readOnly=true;
   document.getElementById('ag-new-id').value=a.id;document.getElementById('ag-new-nom').value=a.nom||'';
   document.getElementById('ag-new-pass').value=a.motDePasse||'';
+  const passInp=document.getElementById('ag-new-pass');
+  if(passInp){passInp.type='password';passInp.readOnly=!staffPeutGererMdpHotels_();}
+  const passBtn=document.getElementById('btn-ag-pass-toggle');
+  if(passBtn){passBtn.textContent='👁';passBtn.disabled=!staffPeutGererMdpHotels_();}
   document.getElementById('ag-new-email').value=a.email||'';document.getElementById('ag-new-wa').value=a.telefoneWA||a.telefoneWhatsapp||'';
   const adrEl=document.getElementById('ag-new-adresse'); if(adrEl) adrEl.value=a.adresse||a.morada||'';
   document.getElementById('ag-new-use-wa').value=a.useWA||a.useWhatsapp||'nao';document.getElementById('ag-new-lang').value=a.langueContact||'PT';
@@ -6090,6 +6639,10 @@ async function doSaveAgence(){
       langueContact:document.getElementById('ag-new-lang').value
     };
     const pass=document.getElementById('ag-new-pass').value.trim();
+    if(!staffPeutGererMdpHotels_()){
+      showMsgEl('add-ag-msg','Sem acesso completo: não pode alterar a palavra-passe do hotel.','error');
+      return;
+    }
     if(!pass){showMsgEl('add-ag-msg','Palavra-passe obrigatória (login do hotel)','error');return;}
     ag.motDePasse=pass;
     const d=await api({action:'salvarAgenciaERP',adminToken:S.token,agencia:ag},{timeoutMs:45000});
@@ -7122,6 +7675,8 @@ document.addEventListener('keydown',e=>{
       clearHotelSessionStorage();
     } else {
       S.token = tok;
+      try { S.adminId = sessionStorage.getItem('nlp_staff_admin_id') || 'AGENCE_ADMIN'; } catch (e) { S.adminId = 'AGENCE_ADMIN'; }
+      S.fullAccess = true;
       try { sessionStorage.setItem(HOTEL_TOK_KEY_SS, tok); } catch (e) {}
       bumpHotelActivity();
       showScreen('app-screen');
