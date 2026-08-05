@@ -673,13 +673,21 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
 
 /* Route map compact (création réservation) */
 .route-map-wrap{grid-column:1/-1;margin:2px 0 4px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface);overflow:hidden;max-width:100%;min-width:0}
-.route-map-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid var(--border2);background:var(--white)}
+.route-map-toggle{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--white);cursor:pointer;user-select:none;min-height:44px}
+.route-map-toggle input{width:18px;height:18px;accent-color:var(--navy);flex-shrink:0}
+.route-map-toggle-txt{font-size:13px;font-weight:600;color:var(--navy)}
+.route-map-toggle-hint{font-size:11px;color:var(--ts);font-weight:500}
+.route-map-body{display:none;border-top:1px solid var(--border2)}
+.route-map-wrap.open .route-map-body{display:block}
+.route-map-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:7px 10px;border-bottom:1px solid var(--border2);background:var(--surface)}
 .route-map-legend{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:600;color:var(--tm);flex-wrap:wrap}
 .route-map-pin{display:inline-flex;align-items:center;gap:5px}
 .route-map-dot{width:14px;height:14px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff;line-height:1;flex-shrink:0}
 .route-map-dot.a{background:var(--navy)}
 .route-map-dot.b{background:var(--gold);color:var(--navy)}
-.route-map-status{font-size:10px;color:var(--ts);font-weight:500;max-width:50%;text-align:right;line-height:1.35;word-break:break-word}
+.route-map-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;max-width:55%}
+.route-map-status{font-size:10px;color:var(--ts);font-weight:500;text-align:right;line-height:1.35;word-break:break-word}
+.route-map-eta{font-size:11px;font-weight:700;color:var(--navy);text-align:right}
 .route-map-el{height:150px;width:100%;max-width:100%;background:#dce6f0;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .route-map-el .leaflet-container{font:inherit;width:100%!important;height:100%!important}
 .route-map-el .leaflet-control-zoom a{width:32px!important;height:32px!important;line-height:32px!important;font-size:16px!important}
@@ -692,7 +700,8 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
 @media(max-width:768px){
   .route-map-el{height:160px}
   .route-map-bar{flex-direction:column;align-items:flex-start;gap:6px;padding:8px 10px}
-  .route-map-status{max-width:100%;text-align:left;font-size:11px}
+  .route-map-meta{align-items:flex-start;max-width:100%}
+  .route-map-status,.route-map-eta{text-align:left;font-size:11px}
   .route-map-el .leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important}
   #section-create .form-grid input,
   #section-create .form-grid select,
@@ -1068,14 +1077,24 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           <div class="fg"><label><span id="lbl-cr-addr-dep">Adresse départ</span> <span class="lbl-cr-opt" id="cr-addr-dep-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dep" placeholder="Rua, nº…" oninput="scheduleCrRouteMap()"></div>
           <div class="fg"><label><span id="lbl-cr-addr-dest">Adresse destination</span> <span class="lbl-cr-opt" id="cr-addr-dest-opt" style="font-size:9px;color:var(--ts)">(opt.)</span></label><input type="text" id="cr-addr-dest" placeholder="Rua, nº…" oninput="scheduleCrRouteMap()"></div>
           <div class="route-map-wrap" id="cr-route-map-wrap">
-            <div class="route-map-bar">
-              <div class="route-map-legend">
-                <span class="route-map-pin"><span class="route-map-dot a">A</span> Partida</span>
-                <span class="route-map-pin"><span class="route-map-dot b">B</span> Destino</span>
+            <label class="route-map-toggle" for="cr-route-map-cb">
+              <input type="checkbox" id="cr-route-map-cb" onchange="toggleCrRouteMap(this.checked)">
+              <span class="route-map-toggle-txt">🗺️ Ver trajeto no mapa</span>
+              <span class="route-map-toggle-hint">opcional · tempo estimado aproximado</span>
+            </label>
+            <div class="route-map-body" id="cr-route-map-body">
+              <div class="route-map-bar">
+                <div class="route-map-legend">
+                  <span class="route-map-pin"><span class="route-map-dot a">A</span> Partida</span>
+                  <span class="route-map-pin"><span class="route-map-dot b">B</span> Destino</span>
+                </div>
+                <div class="route-map-meta">
+                  <div class="route-map-eta" id="cr-route-map-eta"></div>
+                  <div class="route-map-status" id="cr-route-map-status">Selecione partida / destino</div>
+                </div>
               </div>
-              <div class="route-map-status" id="cr-route-map-status">Selecione partida / destino</div>
+              <div class="route-map-el" id="cr-route-map" role="img" aria-label="Mapa do trajeto"></div>
             </div>
-            <div class="route-map-el" id="cr-route-map" role="img" aria-label="Mapa do trajeto"></div>
           </div>
           <div class="fg"><label id="lbl-cr-date">Date</label><input type="date" id="cr-date"></div>
           <div class="fg"><label id="lbl-cr-hour">Heure (24h)</label><input type="time" id="cr-heure"></div>
@@ -5797,6 +5816,43 @@ function buildRouteGeoQuery_(name,addr){
   return '';
 }
 
+function haversineKm_(a,b){
+  const R=6371, toRad=x=>x*Math.PI/180;
+  const dLat=toRad(b.lat-a.lat), dLng=toRad(b.lng-a.lng);
+  const s=Math.sin(dLat/2)**2+Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(s));
+}
+function formatRouteEta_(sec,km){
+  if(!(sec>0) && !(km>0)) return '';
+  let s=sec;
+  if(!(s>0) && km>0) s=Math.round((km/35)*3600); // ~35 km/h urbain
+  const min=Math.max(1,Math.round(s/60));
+  const dist=km>0?(km<10?km.toFixed(1):Math.round(km))+' km · ':'';
+  if(min<60) return '~ '+dist+min+' min (aprox.)';
+  const h=Math.floor(min/60), m=min%60;
+  return '~ '+dist+h+' h'+(m?(' '+m+' min'):'')+' (aprox.)';
+}
+async function fetchDrivingRoute_(from,to){
+  const cacheKey=[from.lat.toFixed(4),from.lng.toFixed(4),to.lat.toFixed(4),to.lng.toFixed(4)].join('|');
+  const bucket=_routeMapInst._osrm=_routeMapInst._osrm||{};
+  if(bucket[cacheKey]!==undefined) return bucket[cacheKey];
+  try{
+    const url='https://router.project-osrm.org/route/v1/driving/'+from.lng+','+from.lat+';'+to.lng+','+to.lat+'?overview=full&geometries=geojson';
+    const res=await fetch(url);
+    if(!res.ok){bucket[cacheKey]=null;return null;}
+    const data=await res.json();
+    const r=data&&data.routes&&data.routes[0];
+    if(!r){bucket[cacheKey]=null;return null;}
+    const coords=(r.geometry&&r.geometry.coordinates||[]).map(c=>[c[1],c[0]]);
+    const out={coords,duration:r.duration||0,distanceKm:(r.distance||0)/1000};
+    bucket[cacheKey]=out;
+    return out;
+  }catch(e){
+    bucket[cacheKey]=null;
+    return null;
+  }
+}
+
 async function refreshRouteMap_(opts){
   if(opts && opts._skip){
     const inst=_routeMapInst[opts.key];
@@ -5805,6 +5861,8 @@ async function refreshRouteMap_(opts){
   }
   const key=opts.key;
   const statusEl=document.getElementById(opts.statusId);
+  const etaEl=document.getElementById(opts.etaId||'');
+  if(etaEl) etaEl.textContent='';
   const inst=ensureRouteMap_(key,opts.mapId);
   if(!inst){
     if(statusEl) statusEl.textContent='Mapa indisponível';
@@ -5820,7 +5878,6 @@ async function refreshRouteMap_(opts){
     depQ?geocodeRouteQuery_(depQ):Promise.resolve(null),
     destQ?geocodeRouteQuery_(destQ):Promise.resolve(null)
   ]);
-  // Ignore stale updates
   if(opts.token!=null && opts.token!==_routeMapInst[key]._token) return;
   inst.layer.clearLayers();
   const pts=[];
@@ -5837,8 +5894,15 @@ async function refreshRouteMap_(opts){
     pts.push([destHit.lat,destHit.lng]);
   }
   if(pts.length===2){
-    inst.layer.addLayer(L.polyline(pts,{color:'#0D2137',weight:2.5,opacity:.75,dashArray:'6 5'}));
-    try{inst.map.fitBounds(L.latLngBounds(pts).pad(0.28));}catch(e){}
+    let route=null;
+    try{ route=await fetchDrivingRoute_(depHit,destHit); }catch(e){}
+    if(opts.token!=null && opts.token!==_routeMapInst[key]._token) return;
+    const linePts=(route&&route.coords&&route.coords.length>1)?route.coords:pts;
+    inst.layer.addLayer(L.polyline(linePts,{color:'#0D2137',weight:3,opacity:.8}));
+    try{inst.map.fitBounds(L.latLngBounds(linePts).pad(0.22));}catch(e){}
+    const km=route&&route.distanceKm?route.distanceKm:haversineKm_(depHit,destHit)*1.25;
+    const sec=route&&route.duration?route.duration:0;
+    if(etaEl) etaEl.textContent=formatRouteEta_(sec,km);
     if(statusEl) statusEl.textContent=(opts.depName||'A')+' → '+(opts.destName||'B');
   }else if(pts.length===1){
     inst.map.setView(pts[0],13);
@@ -5879,18 +5943,20 @@ function getCrRoutePoint_(which){
 }
 
 function scheduleCrRouteMap(){
+  if(!document.getElementById('cr-route-map-cb')?.checked) return;
   scheduleRouteMapRefresh_('cr',()=>{
     const dep=getCrRoutePoint_('depart');
     const dest=getCrRoutePoint_('dest');
     const key=[dep.name,dep.addr,dest.name,dest.addr].join('|');
     if(key===S._lastCrRouteKey && _routeMapInst.cr && _routeMapInst.cr.map){
-      return {key:'cr',mapId:'cr-route-map',statusId:'cr-route-map-status',depName:dep.name,depAddr:dep.addr,destName:dest.name,destAddr:dest.addr,_skip:true};
+      return {key:'cr',mapId:'cr-route-map',statusId:'cr-route-map-status',etaId:'cr-route-map-eta',depName:dep.name,depAddr:dep.addr,destName:dest.name,destAddr:dest.addr,_skip:true};
     }
     S._lastCrRouteKey=key;
     return {
       key:'cr',
       mapId:'cr-route-map',
       statusId:'cr-route-map-status',
+      etaId:'cr-route-map-eta',
       depName:dep.name,
       depAddr:dep.addr,
       destName:dest.name,
@@ -5898,6 +5964,24 @@ function scheduleCrRouteMap(){
     };
   });
 }
+function toggleCrRouteMap(on){
+  const wrap=document.getElementById('cr-route-map-wrap');
+  if(wrap) wrap.classList.toggle('open',!!on);
+  if(on){
+    S._lastCrRouteKey='';
+    scheduleCrRouteMap();
+    setTimeout(()=>{
+      try{
+        const inst=_routeMapInst.cr;
+        if(inst&&inst.map) inst.map.invalidateSize();
+      }catch(e){}
+    },120);
+  }else{
+    const eta=document.getElementById('cr-route-map-eta');
+    if(eta) eta.textContent='';
+  }
+}
+function isCrRouteMapOpen_(){ return !!document.getElementById('cr-route-map-cb')?.checked; }
 function invalidateAllRouteMaps_(){
   Object.keys(_routeMapInst).forEach(k=>{
     if(k==='_sched') return;
@@ -6164,8 +6248,10 @@ function resetCreateForm(){
   document.getElementById('cr-orig').value='airport';document.getElementById('cr-lang').value='pt';
   document.getElementById('cr-statut').value='pendente';document.getElementById('cr-paiement').value='non_payé';
   document.getElementById('create-msg').className='modal-msg';document.getElementById('cr-prix-hint').textContent='';
+  const mapCb=document.getElementById('cr-route-map-cb');
+  if(mapCb){ mapCb.checked=false; toggleCrRouteMap(false); }
+  S._lastCrRouteKey='';
   onOrigChange();
-  scheduleCrRouteMap();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -7344,6 +7430,7 @@ function showTab(name){
     ]).then(()=>{
       setTimeout(()=>{
         try{
+          if(!isCrRouteMapOpen_()) return;
           const inst=_routeMapInst.cr;
           if(inst&&inst.map) inst.map.invalidateSize();
           if(!sameTab) scheduleCrRouteMap();
