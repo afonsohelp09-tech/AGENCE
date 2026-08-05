@@ -368,7 +368,7 @@ input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--
 .ag-wa-box{background:var(--ag-wa-bg);border:1px solid var(--ag-wa-b);border-radius:var(--r-lg);padding:14px;margin-bottom:14px}
 .ag-wa-ttl{font-size:13px;font-weight:700;color:var(--agency-wa);display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .ag-wa-desc{font-size:11px;color:var(--ts);margin-bottom:10px;line-height:1.6}
-.ag-wa-preview{background:rgba(15,92,46,.04);border:1px solid var(--ag-wa-b);border-radius:var(--r);padding:12px;font-size:11px;color:var(--tm);line-height:1.8;font-family:monospace;white-space:pre-wrap;max-height:155px;overflow-y:auto;margin-bottom:10px}
+.ag-wa-preview{width:100%;min-height:160px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--ag-wa-b);background:rgba(15,92,46,.04);font-size:11px;color:var(--tm);line-height:1.5;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;box-sizing:border-box;margin-bottom:10px;display:block}
 .ag-wa-lang-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .ag-wa-lb{padding:5px 10px;border-radius:var(--r);border:1px solid var(--ag-wa-b);background:transparent;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;color:var(--agency-wa);cursor:pointer;transition:var(--ease)}
 .ag-wa-lb.active,.ag-wa-lb:hover{background:var(--agency-wa);color:#fff;border-color:var(--agency-wa)}
@@ -645,6 +645,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
   .filters{padding:12px 14px;gap:12px}
   .fg-f{width:100%}
   .f-sel,.f-in,.f-group input{font-size:16px}
+  .ag-wa-preview,#ag-wa-sign-input,#ch-wa-preview{font-size:16px}
   .filters .btn-ghost,.filters .btn-navy{min-height:44px;padding:10px 14px;touch-action:manipulation}
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;margin:0 -4px;padding:0 4px;touch-action:pan-x pan-y}
   table{min-width:720px}
@@ -1750,7 +1751,9 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           </div>
         </div>
         <div id="ag-wa-targets" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
-        <div class="ag-wa-preview" id="ag-wa-preview">—</div>
+        <label style="font-size:11px;color:var(--ts);font-weight:600;display:block;margin-bottom:6px">Pré-visualização (pode editar)</label>
+        <textarea class="ag-wa-preview" id="ag-wa-preview" rows="10" spellcheck="false" aria-label="Mensagem WhatsApp">—</textarea>
+        <p style="font-size:10px;color:var(--ts);margin:0 0 10px;line-height:1.45">Ao enviar ou copiar, será pedido o seu nome para a assinatura (Cumprimentos / Cordialement / Kind regards / Atentamente).</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn btn-ag-wa btn-sm" id="btn-ag-wa-main" onclick="openAgWA()">
             🏢 Abrir WhatsApp → Agência
@@ -1758,6 +1761,7 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
           <button class="btn btn-ghost btn-sm" onclick="copyAgWAMsg()">
             📋 Copiar Mensagem
           </button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="genAgWaMsg(S.curAgWaLang||'pt')">🔄 Restaurar modelo</button>
         </div>
         <p class="ag-wa-help" style="font-size:10px;color:var(--ts);margin:10px 0 0;line-height:1.45;max-width:52em">
           <strong>Número vs grupo:</strong> escolha <em>Número</em> para abrir <code style="font-size:10px">wa.me</code> com o texto já preenchido; escolha <em>Grupo</em> e, após assinar, aparece um passo com o texto e o botão <strong>Copiar e abrir grupo</strong> (o WhatsApp não coloca texto automático em links de grupo). <strong>Não é possível</strong> listar automaticamente os telefones dos membros de um grupo: o WhatsApp não expõe isso. Use o <strong>link de convite</strong> do grupo (<code style="font-size:10px">https://chat.whatsapp.com/…</code>) na <strong>Gestão de Hotéis</strong> — obtido no telemóvel: Grupo → <em>Convidar com link</em> → <em>Copiar</em>.
@@ -1767,10 +1771,14 @@ html[data-theme="dark"] .modal-msg.error{color:#fca5a5}
       <!-- Chauffeur — atribuição, WhatsApp, dossier (NOUVEAU) -->
       <div class="ag-wa-box" id="d-chauffeur-box" style="margin-top:14px">
         <div class="ag-wa-ttl">🚗 Motorista atribuído</div>
-        <div class="fg" style="margin-bottom:10px"><select id="d-chauffeur-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px"><option value="">— Não atribuído —</option></select></div>
+        <div class="fg" style="margin-bottom:10px"><select id="d-chauffeur-sel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--r);font-family:'DM Sans',sans-serif;font-size:13px" onchange="refreshChauffeurWaPreview()"><option value="">— Não atribuído —</option></select></div>
+        <label style="font-size:11px;color:var(--ts);font-weight:600;display:block;margin-bottom:6px">Pré-visualização WhatsApp → Motorista (pode editar)</label>
+        <textarea class="ag-wa-preview" id="ch-wa-preview" rows="10" spellcheck="false" aria-label="Mensagem WhatsApp motorista"></textarea>
+        <p style="font-size:10px;color:var(--ts);margin:0 0 10px;line-height:1.45">Ao enviar, será pedido o seu nome para a assinatura (Cumprimentos + nome), como no staff-reception.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button type="button" class="btn btn-navy btn-sm" onclick="doAssignChauffeur()">💾 Guardar motorista</button>
           <button type="button" class="btn btn-ag-wa btn-sm" onclick="waChauffeur()">💬 WhatsApp → Motorista</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="refreshChauffeurWaPreview()">🔄 Restaurar modelo</button>
           <button type="button" class="btn btn-ghost btn-sm" onclick="printDriverSheetFromDetail()">🖨️ Dossier chauffeur</button>
         </div>
       </div>
@@ -5096,6 +5104,7 @@ async function openDetail(id){
         chSel.appendChild(o);
       });
     }
+    refreshChauffeurWaPreview();
   }catch(e){}
 
     const locked=staffIsResaFullEditLocked(r);
@@ -5142,11 +5151,22 @@ function agWaSignFooter(lang, signerName){
   const name=String(signerName).trim();
   return '\n\n'+line+'\n'+name;
 }
-function buildAgWaMessageSigned(signerName){
+function buildAgWaBody(){
   if(!S.curWaResa)return'';
   const lang=String(S.curAgWaLang||'pt').toLowerCase().slice(0,2);
   const fn=WA_AGENCE[lang]||WA_AGENCE.pt;
-  return fn(S.curWaResa,'Agence Ruelas')+agWaSignFooter(lang, signerName);
+  return fn(S.curWaResa,'Agence Ruelas');
+}
+function getAgWaEditedBody(){
+  const el=document.getElementById('ag-wa-preview');
+  const raw=el?(el.value!=null?el.value:el.textContent):'';
+  const v=String(raw||'').trim();
+  if(v && v!=='—') return v;
+  return buildAgWaBody();
+}
+function buildAgWaMessageSigned(signerName){
+  const lang=String(S.curAgWaLang||'pt').toLowerCase().slice(0,2);
+  return getAgWaEditedBody()+agWaSignFooter(lang, signerName);
 }
 var _agWaSignCallback=null;
 function promptAgWaSignerNameThen(onOk){
@@ -5232,9 +5252,12 @@ function genAgWaMsg(lang){
   if(!S.curWaResa)return;
   const lc=String(lang||'pt').toLowerCase().slice(0,2);
   S.curAgWaLang=lc;
-  const fn=WA_AGENCE[lc]||WA_AGENCE.pt;
   const el=document.getElementById('ag-wa-preview');
-  if(el)el.textContent=fn(S.curWaResa,'Agence Ruelas');
+  if(el){
+    const body=buildAgWaBody();
+    if(el.value!=null) el.value=body;
+    else el.textContent=body;
+  }
 }
 function setAgWaLang(lang,btn){
   document.querySelectorAll('.ag-wa-lang-row .ag-wa-lb').forEach(b=>b.classList.remove('active'));
@@ -5535,15 +5558,8 @@ async function doAssignChauffeur(){
   }catch(e){toast('❌ '+e.message,'error');}
 }
 
-function waChauffeur(){
-  if(!S.curId)return;
-  const r=S.reservas.find(x=>x.id===S.curId);if(!r)return;
-  const chId=document.getElementById('d-chauffeur-sel')?.value||r.chauffeurId||'';
-  const ch=S.chauffeurs.find(c=>c.chauffeurId===chId);
-  if(!ch||!ch.telephone){toast('⚠️ Motorista sem telefone configurado','warn');return;}
-  const tel=normaliserDigitsPourWaMeClient(String(ch.telephone||''));
-  if(!tel||tel.length<8){toast('⚠️ Telefone do motorista inválido','warn');return;}
-  const msg=`*NOVO SERVIÇO — Agence Ruelas*\n\n`+
+function buildChauffeurWaMsg(r,ch){
+  return `*NOVO SERVIÇO — Agence Ruelas*\n\n`+
     `Olá ${ch.nom||''}, tem um transfer atribuído:\n\n`+
     `- Ref.: *${r.id}*\n`+
     `- Cliente: ${r.clientNom||'—'} (${formaterTelephonePourMessageWa(r.telephone)})\n`+
@@ -5556,8 +5572,32 @@ function waChauffeur(){
     (r.numChambre?`\n- Quarto: ${r.numChambre}`:'')+
     (r.commentaires?`\n- Notas: ${r.commentaires}`:'')+
     `\n\nObrigado!`;
-  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`,'_blank');
-  toast('🚗 WhatsApp motorista','wa');
+}
+function refreshChauffeurWaPreview(){
+  const ta=document.getElementById('ch-wa-preview');
+  if(!ta||!S.curId) return;
+  const r=S.reservas.find(x=>x.id===S.curId);
+  if(!r){ ta.value=''; return; }
+  const chId=document.getElementById('d-chauffeur-sel')?.value||r.chauffeurId||'';
+  const ch=S.chauffeurs.find(c=>c.chauffeurId===chId)||{nom:''};
+  ta.value=buildChauffeurWaMsg(r,ch);
+}
+function waChauffeur(){
+  if(!S.curId)return;
+  const r=S.reservas.find(x=>x.id===S.curId);if(!r)return;
+  const chId=document.getElementById('d-chauffeur-sel')?.value||r.chauffeurId||'';
+  const ch=S.chauffeurs.find(c=>c.chauffeurId===chId);
+  if(!ch||!ch.telephone){toast('⚠️ Motorista sem telefone configurado','warn');return;}
+  const tel=normaliserDigitsPourWaMeClient(String(ch.telephone||''));
+  if(!tel||tel.length<8){toast('⚠️ Telefone do motorista inválido','warn');return;}
+  const ta=document.getElementById('ch-wa-preview');
+  if(ta && !String(ta.value||'').trim()) refreshChauffeurWaPreview();
+  promptAgWaSignerNameThen(function(signer){
+    const body=(ta&&String(ta.value).trim())||buildChauffeurWaMsg(r,ch);
+    const msg=body+agWaSignFooter('pt', signer);
+    window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`,'_blank');
+    toast('🚗 WhatsApp motorista','wa');
+  });
 }
 
 /** Imprime un dossier chauffeur (fenêtre imprimable) — adapté de nhbPrintDriverSheet. */
