@@ -822,6 +822,83 @@ body{font-size:clamp(13px,1.4vw + 10px,15px)}
   .bn-item{font-size:.625rem;padding:4px 2px}
   .topbar-title{max-width:100px}
 }
+
+/* ═══ PACK SIZING MOBILE EXHAUSTIF (GUIDE-MOBILE-SIZING) ═══ */
+:root{
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-left:env(safe-area-inset-left,0px);
+  --safe-right:env(safe-area-inset-right,0px);
+}
+@media(max-width:640px){
+  body{font-size:1rem;line-height:1.5}
+  h1,.login-brand{font-size:clamp(1.5rem,5vw,1.75rem);font-weight:700;line-height:1.2}
+  h2,.card-ttl,.sec-ttl{font-size:clamp(1.25rem,4vw,1.375rem);font-weight:600;line-height:1.25}
+  h3,.stat-lbl{font-size:clamp(1.0625rem,3.5vw,1.125rem);font-weight:600;line-height:1.3}
+  .login-box{max-width:400px;width:100%;padding:1.25rem;margin:0 auto;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .login-emblem{width:72px;height:72px;max-height:80px;margin-bottom:1.5rem}
+  .f-group{margin-bottom:1rem}
+  .f-group input,.f-inp,.f-sel,.f-in{min-height:50px;font-size:1rem!important;padding:12px 14px}
+  .btn-login{width:100%;min-height:50px;font-size:1rem;font-weight:700}
+  .topbar{min-height:56px;padding-left:max(1rem,var(--safe-left));padding-right:max(1rem,var(--safe-right));padding-top:max(6px,var(--safe-top))}
+  .topbar-title{font-size:1.125rem;font-weight:600}
+  .btn-nav-toggle,.modal-close,.theme-btn{min-width:48px;min-height:48px;width:48px;height:48px}
+  .nav-drawer-panel{width:min(85vw,320px);max-width:320px}
+  .nav-drawer-tab{min-height:48px}
+  .stats-grid,.form-grid,.bilan-kpis,.service-grid{grid-template-columns:1fr!important;gap:12px}
+  .card,.stat-card,.m-card{padding:1rem;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .section{padding:1rem;padding-bottom:max(1.25rem,var(--safe-bottom))}
+  .bottom-nav{
+    height:calc(60px + var(--safe-bottom));
+    padding-bottom:var(--safe-bottom);
+    padding-top:6px;
+  }
+  .bn-item{min-height:48px}
+  .bn-item .bn-ico{font-size:1.5rem;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+  .bn-item span:not(.bn-ico){font-size:.6875rem}
+  #app-screen.on{padding-bottom:calc(60px + var(--safe-bottom))}
+  button,.btn,.btn-tb{min-height:48px}
+  .overlay{padding:0;align-items:flex-end}
+  .modal{
+    width:100%!important;max-width:100%!important;height:auto!important;
+    max-height:85dvh!important;max-height:85vh!important;
+    border-radius:20px 20px 0 0!important;margin:0!important;
+    padding-bottom:max(1.25rem,var(--safe-bottom));
+    display:flex;flex-direction:column;
+  }
+  .modal::before,.modal-sheet-handle{
+    content:'';display:block;width:40px;height:4px;border-radius:99px;
+    background:rgba(128,128,128,.35);margin:12px auto 8px;flex-shrink:0;
+  }
+  .modal:has(.modal-sheet-handle)::before{display:none!important}
+  .modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:1.25rem}
+  .modal-footer{flex-direction:column;gap:10px;padding:12px 1.25rem;padding-bottom:max(12px,var(--safe-bottom))}
+  .modal-footer .btn{width:100%;min-height:50px}
+  input,select,textarea,.f-inp,.f-sel,.f-in{font-size:1rem!important}
+}
+@media(max-width:480px){
+  .badge,.tab-nb{font-size:.75rem}
+  .ag-wa-desc,.helper{font-size:.8125rem}
+}
+
+/* ═══ HARMONISATION (RECOMMANDATIONS-MOBILE-RESPONSIVE) — modales plein écran (aligné Nhalabene/Hotel) ═══ */
+@media(max-width:600px){
+  .overlay{padding:0!important;align-items:stretch!important}
+  .modal{
+    width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+    border-radius:0!important;margin:0!important;
+    display:flex;flex-direction:column;
+  }
+  .modal::before{display:none!important}
+  .modal-sheet-handle{display:none!important}
+  .modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .modal-footer{
+    display:flex;flex-direction:column;gap:8px;
+    position:sticky;bottom:0;background:var(--white,var(--surface));
+    padding:12px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));
+  }
+  .modal-footer button,.modal-footer .btn{width:100%}
+}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
