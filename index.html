@@ -5031,6 +5031,9 @@ function renderTable(){
     const paidBadge=r.statutPaiement==='payé'?`<span style="color:var(--success);font-weight:600;font-size:11px">✓ ${T2.paidYes}</span>`:`<span style="color:var(--ts);font-size:11px">—</span>`;
     const locked=staffIsResaFullEditLocked(r);
     const canPago=r.statut!=='cancelado';
+    const nlTag=(r.fromNextLevel||r.criadoPor==='NEXT_LEVEL'||r.canal==='NEXT_LEVEL')
+      ?' <span style="font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--gold-b);border-radius:4px;padding:1px 5px;font-weight:700" title="Next Level">NL</span>'
+      :'';
     const acts=wrapActsMenu_(`
         <button class="btn btn-ghost btn-sm" onclick="openDetail('${r.id}')" title="Detalhe">👁</button>
         ${!locked?`<button class="btn btn-warn btn-sm" onclick="openEditModal('${r.id}')" title="Editar">✏️</button>`:''}
@@ -5040,7 +5043,7 @@ function renderTable(){
       `);
     h+=`<tr class="${sel?'selected':''}">
       <td class="center"><input type="checkbox" ${sel?'checked':''} onchange="toggleSelect('${r.id}',this)"></td>
-      <td class="mono">${r.id}</td>
+      <td class="mono">${r.id}${nlTag}</td>
       <td class="bold" style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${r.clientNom||'—'}</td>
       <td>${fmtD(r.dateTransfer)}</td>
       <td style="font-weight:600">${fmtH(r.heureTransfer)}</td>
