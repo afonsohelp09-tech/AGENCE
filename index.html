@@ -55,6 +55,9 @@ body{
 .m-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem;box-shadow:var(--shadow);touch-action:manipulation}
 .m-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
 .m-card-ref{font-family:ui-monospace,monospace;font-size:.8125rem;font-weight:700;color:var(--navy)}
+.nl-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:rgba(201,168,76,.18);color:var(--gold);border:1px solid var(--gold-b);border-radius:4px;padding:2px 7px;vertical-align:middle;white-space:nowrap}
+tr.nl-row td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+.m-card.nl-card{border-color:var(--gold-b);box-shadow:0 0 0 1px rgba(201,168,76,.28)}
 .m-card-client{font-size:1rem;font-weight:600;color:var(--text);margin:0 0 6px}
 .m-card-meta{font-size:.8125rem;color:var(--ts);line-height:1.45;margin:0 0 10px}
 .m-card-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
@@ -3976,6 +3979,12 @@ async function loadAgencias(opts){
       }
       const prev=sel.value;
       sel.innerHTML=isFilter?`<option value="">${o.fAgFilterAll}</option>`:`<option value="">${o.agNonAttrib}</option>`;
+      if(isFilter){
+        const opNl=document.createElement('option');
+        opNl.value='__NEXT_LEVEL__';
+        opNl.textContent='Next Level';
+        sel.appendChild(opNl);
+      }
       if(!isFilter && id!=='as-agence'){
         const opd=document.createElement('option');opd.value='__AGENCE__';opd.textContent='🏠 Serviço próprio (sem hotel)';sel.appendChild(opd);
       }
@@ -4866,14 +4875,19 @@ function getFiltered(){
   if(!S._searchIndex){
     S._searchIndex=S.reservas.map(r=>({
       r,
-      searchStr:(r.id+r.clientNom+r.clientEmail+r.numReservaOta).toLowerCase()
+      searchStr:(r.id+' '+(r.clientNom||'')+' '+(r.clientEmail||'')+' '+(r.numReservaOta||'')+(isResaNextLevel(r)?' next level nl':'')).toLowerCase()
     }));
   }
   
   return S._searchIndex.filter(({r,searchStr})=>{
     if(search&&!searchStr.includes(search))return false;
     if(statut&&r.statut!==statut)return false;
-    if(agence&&r.agencyId!==agence)return false;
+    if(agence==='__NEXT_LEVEL__'){
+      if(!isResaNextLevel(r))return false;
+    }else if(agence==='__AGENCE__'){
+      if(isResaNextLevel(r))return false;
+      if(r.agencyId&&r.agencyId!=='__AGENCE__')return false;
+    }else if(agence&&r.agencyId!==agence)return false;
     if(ds&&r.dateTransfer<ds)return false;
     if(de&&r.dateTransfer>de)return false;
     if(type&&r.origineType!==type)return false;
@@ -4882,9 +4896,7 @@ function getFiltered(){
 }
 
 function staffAgencySortLabel(r){
-  if(!r||!r.agencyId) return '';
-  const a=S.agencias.find(x=>x.id===r.agencyId);
-  return String((a&&a.nom)||r.agencyId||'').toLowerCase();
+  return String(staffHotelLabel(r)||'').toLowerCase();
 }
 function staffSortMark(key){
   if(S.tblSortKey!==key) return '';
@@ -5031,11 +5043,10 @@ function renderTable(){
     const paidBadge=r.statutPaiement==='payé'?`<span style="color:var(--success);font-weight:600;font-size:11px">✓ ${T2.paidYes}</span>`:`<span style="color:var(--ts);font-size:11px">—</span>`;
     const locked=staffIsResaFullEditLocked(r);
     const nl=isResaNextLevel(r);
+    const nlTag=nl?' '+nlBadgeHtml():'';
+    const hotelLbl=staffHotelLabel(r);
     const nlBlock=staffIsNlParceiroBlocked(r);
     const canPago=!nl&&r.statut!=='cancelado';
-    const nlTag=(r.fromNextLevel||r.criadoPor==='NEXT_LEVEL'||r.canal==='NEXT_LEVEL')
-      ?' <span style="font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--gold-b);border-radius:4px;padding:1px 5px;font-weight:700" title="Next Level — opções de parceiro">NL</span>'
-      :'';
     const showEdit=nl?!nlBlock:!locked;
     const showAssign=!nl&&!locked;
     const acts=wrapActsMenu_(`
@@ -5045,7 +5056,7 @@ function renderTable(){
         ${showAssign?`<button class="btn btn-success btn-sm" onclick="openAssignModal('${r.id}')" title="Hotel">🏢</button>`:''}
         ${canPago?`<button class="btn btn-ghost btn-sm" onclick="quickPago('${r.id}','${r.statutPaiement}')" title="Pagamento">💶</button>`:''}
       `);
-    h+=`<tr class="${sel?'selected':''}">
+    h+=`<tr class="${sel?'selected':''}${nl?' nl-row':''}">
       <td class="center"><input type="checkbox" ${sel?'checked':''} onchange="toggleSelect('${r.id}',this)"></td>
       <td class="mono">${r.id}${nlTag}</td>
       <td class="bold" style="max-width:140px;overflow:hidden;text-overflow:ellipsis">${r.clientNom||'—'}</td>
@@ -5053,23 +5064,23 @@ function renderTable(){
       <td style="font-weight:600">${fmtH(r.heureTransfer)}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;font-size:12px">${ico} ${r.pointDepart||'—'} → ${r.destination||'—'}</td>
       <td>${r.personnes||'—'}👤</td>
-      <td style="font-size:11px;max-width:100px;overflow:hidden;text-overflow:ellipsis">${r.agencyId?`<strong>${agName}</strong>`:'<span style="color:var(--ts)">—</span>'}</td>
+      <td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis">${staffHotelCellHtml(r)}</td>
       <td class="prix-cell"><strong class="prix-cell-strong${r.prixFinal?'':' price-missing'}">${r.prixFinal?r.prixFinal+'€':'—'}</strong></td>
       <td>${badge(r.statut)}</td>
       <td>${paidBadge}</td>
       <td>${r._emailSent?`<span title="Email envoyé" style="color:var(--success);font-size:13px">✉️✓</span>`:`<span style="color:var(--tl);font-size:11px">—</span>`}</td>
       <td><div class="row-acts">${acts}</div></td>
     </tr>`;
-    cards+=`<article class="m-card">
+    cards+=`<article class="m-card${nl?' nl-card':''}">
       <div class="m-card-top">
         <label style="display:flex;align-items:center;gap:8px;min-height:44px" onclick="event.stopPropagation()">
           <input type="checkbox" ${sel?'checked':''} onchange="toggleSelect('${r.id}',this)" style="width:20px;height:20px">
-          <span class="m-card-ref">${r.id}</span>
+          <span class="m-card-ref">${r.id}</span>${nlTag}
         </label>
         ${badge(r.statut)}
       </div>
       <p class="m-card-client" onclick="openDetail('${r.id}')">${r.clientNom||'—'}</p>
-      <p class="m-card-meta" onclick="openDetail('${r.id}')">${fmtD(r.dateTransfer)} · ${fmtH(r.heureTransfer)} · ${agName}<br>${ico} ${r.pointDepart||'—'} → ${r.destination||'—'}</p>
+      <p class="m-card-meta" onclick="openDetail('${r.id}')">${fmtD(r.dateTransfer)} · ${fmtH(r.heureTransfer)} · ${hotelLbl}<br>${ico} ${r.pointDepart||'—'} → ${r.destination||'—'}</p>
       <div class="m-card-row"><span>${r.personnes||'—'}👤</span><strong>${r.prixFinal?r.prixFinal+'€':'—'}</strong>${paidBadge}</div>
       <div class="m-card-acts">${acts}</div>
     </article>`;
@@ -5410,7 +5421,29 @@ function staffIsResaFullEditLocked(r){
   return staffIsTransferDatePast(r);
 }
 function isResaNextLevel(r){
-  return !!(r&&(r.fromNextLevel||r.criadoPor==='NEXT_LEVEL'||r.canal==='NEXT_LEVEL'));
+  if(!r)return false;
+  const cree=String(r.criadoPor||r.creePar||r.canal||'').toUpperCase();
+  if(r.fromNextLevel||cree==='NEXT_LEVEL')return true;
+  return /^NL[-_]/i.test(String(r.id||''));
+}
+function nlBadgeHtml(){
+  return '<span class="nl-badge" title="Next Level">Next Level</span>';
+}
+function staffHotelLabel(r){
+  if(isResaNextLevel(r)){
+    const hid=r.agencyId&&r.agencyId!=='__AGENCE__'?agDisplayLabel(r.agencyId):'';
+    return hid&&hid!=='—' ? ('Next Level · '+hid) : 'Next Level';
+  }
+  return r.agencyId?agDisplayLabel(r.agencyId):'—';
+}
+function staffHotelCellHtml(r){
+  if(isResaNextLevel(r)){
+    const hid=r.agencyId&&r.agencyId!=='__AGENCE__'?agDisplayLabel(r.agencyId):'';
+    const extra=(hid&&hid!=='—')?` · <strong>${hid}</strong>`:'';
+    return nlBadgeHtml()+extra;
+  }
+  if(r.agencyId) return `<strong>${agDisplayLabel(r.agencyId)}</strong>`;
+  return '<span style="color:var(--ts)">—</span>';
 }
 function staffIsNlTransferPast(r){
   if(!r)return false;
@@ -5550,7 +5583,7 @@ function copyResaToCreateForm(r){
 async function openDetail(id){
   const r=S.reservas.find(x=>x.id===id);if(!r)return;
   S.curId=id;S.curWaResa=r;S.curAgWaLang='pt';
-  document.getElementById('d-id').textContent=r.id;
+  document.getElementById('d-id').innerHTML=r.id+(isResaNextLevel(r)?' '+nlBadgeHtml():'');
   const agNom=agDisplayLabel(r.agencyId);
   const isIN=r.origineType==='airport';
   const dirLabel=isIN?`<span style="background:var(--info-bg);color:var(--info);border:1px solid var(--info-b);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700">📥 Transfer IN (Chegada)</span>`:`<span style="background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-b);border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700">📤 Transfer OUT (Partida)</span>`;
@@ -5569,7 +5602,7 @@ async function openDetail(id){
     ${r.numChambre?`<div class="info-item"><div class="info-label">🏨 Quarto</div><div class="info-value">${r.numChambre}</div></div>`:''}
     <div class="info-item"><div class="info-label">Preço</div><div class="info-value gold">${r.prixFinal?r.prixFinal+' €':'—'}</div></div>
     <div class="info-item"><div class="info-label">Estado</div><div class="info-value">${badge(r.statut)}</div></div>
-    <div class="info-item"><div class="info-label">Hotel</div><div class="info-value">${r.agencyId?`<strong>${agNom}</strong>${r.agencyId!=='__AGENCE__'?` <span style="font-size:10px;color:var(--ts)">(${r.agencyId})</span>`:''}`:'—'}</div></div>
+    <div class="info-item"><div class="info-label">Hotel</div><div class="info-value">${isResaNextLevel(r)?nlBadgeHtml()+(r.agencyId&&r.agencyId!=='__AGENCE__'?` · <strong>${agNom}</strong> <span style="font-size:10px;color:var(--ts)">(${r.agencyId})</span>`:''):(r.agencyId?`<strong>${agNom}</strong>${r.agencyId!=='__AGENCE__'?` <span style="font-size:10px;color:var(--ts)">(${r.agencyId})</span>`:''}`:'—')}</div></div>
     <div class="info-item"><div class="info-label">Pagamento</div><div class="info-value"><span style="color:${r.statutPaiement==='payé'?'var(--success)':'var(--ts)'};font-weight:600">${r.statutPaiement||'—'}</span></div></div>
     ${r.commentaires?`<div class="info-item full"><div class="info-label">Comentários</div><div class="info-value">${r.commentaires}</div></div>`:''}
     ${r.pdfUrl?`<div class="info-item full"><div class="info-label">PDF</div><div class="info-value"><a href="${r.pdfUrl}" target="_blank" style="color:var(--navy3);font-weight:600">📄 Abrir PDF</a></div></div>`:''}
@@ -5889,9 +5922,9 @@ function staffGetCalData(){
   const endDt=new Date(startDt.getTime()+60*60*1000);
   const pad=n=>String(n).padStart(2,'0');
   const fmt=dt=>`${dt.getFullYear()}${pad(dt.getMonth()+1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}00`;
-  const agNom=r.agencyId?agDisplayLabel(r.agencyId):'';
+  const agNom=isResaNextLevel(r)?'Next Level'+(r.agencyId&&r.agencyId!=='__AGENCE__'?' · '+agDisplayLabel(r.agencyId):''):(r.agencyId?agDisplayLabel(r.agencyId):'');
   return{r,startDt,endDt,start:fmt(startDt),end:fmt(endDt),
-    title:`Transfer ${r.id} — ${r.clientNom||''}${agNom?' ['+agNom+']':''}`,agNom};
+    title:`Transfer ${r.id}${isResaNextLevel(r)?' [Next Level]':''} — ${r.clientNom||''}${agNom?' ['+agNom+']':''}`,agNom};
 }
 function staffAddToGoogleCalendar(){
   const c=staffGetCalData();if(!c)return;
@@ -5989,7 +6022,7 @@ async function doGeneratePDF(){
   toast('⏳ Génération PDF…');
   try{
     const isIN=r.origineType==='airport';
-    const agNom=agDisplayLabel(r.agencyId);
+    const agNom=staffHotelLabel(r);
     const pdfHtml=`<html><head><meta charset="UTF-8">
 <style>
 body{font-family:Arial,sans-serif;padding:28px 36px;color:#1A1A1A;max-width:700px;margin:0 auto}
@@ -6113,7 +6146,7 @@ function waChauffeur(){
 function printDriverSheet(r,ch){
   if(!r||!r.id){toast('⚠️ Dados da reserva em falta','warn');return;}
   ch=ch||{};
-  const agNom=agDisplayLabel(r.agencyId);
+  const agNom=staffHotelLabel(r);
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Dossier chauffeur ${r.id}</title>
 <style>
 body{font-family:Georgia,serif;color:#0a1628;margin:24px;font-size:14px;line-height:1.5}
@@ -6172,7 +6205,7 @@ function openEditFromDetail(){closeModal('ov-detail');openEditModal(S.curId);}
 
 function openEditModal(id){
   const r=S.reservas.find(x=>x.id===id);if(!r)return;
-  S.curId=id;document.getElementById('e-id').textContent=id;
+  S.curId=id;document.getElementById('e-id').innerHTML=id+(isResaNextLevel(r)?' '+nlBadgeHtml():'');
   document.getElementById('e-msg').className='modal-msg';
   if(isResaNextLevel(r)){
     if(staffIsNlParceiroBlocked(r)){
@@ -6995,7 +7028,8 @@ function formatBilanFiltersText(f){
   const parts=[];
   const statMap={pendente:tx.fStatPend||'Pendente',confirmado:tx.fStatConf||'Confirmado',cancelado:tx.fStatCanc||'Cancelado',realizado:tx.fStatReal||'Realizado'};
   const typeMap={airport:tx.fTypeAirport||'Airport',hotel:tx.fTypeHotel||'Hotel',train:tx.fTypeTrain||'Train',bus:tx.fTypeBus||'Bus',highspeed:tx.fTypeHighspeed||'Highspeed'};
-  if(f.agencia) parts.push((tx.fAg||'Agence')+': '+f.agencia);
+  if(f.agencia==='__NEXT_LEVEL__') parts.push((tx.fAg||'Agence')+': Next Level');
+  else if(f.agencia) parts.push((tx.fAg||'Agence')+': '+f.agencia);
   else parts.push((tx.fAg||'Agence')+': '+(tx.fAll||'Tous'));
   if(f.statut) parts.push((tx.fStatut||'Statut')+': '+(statMap[f.statut]||f.statut));
   else parts.push((tx.fStatut||'Statut')+': '+(tx.fAll||'Tous'));
@@ -7018,7 +7052,12 @@ function filterBilanReservas(f){
   return(S.reservas||[]).filter(r=>{
     if(f.dateDebut&&r.dateTransfer<f.dateDebut) return false;
     if(f.dateFin&&r.dateTransfer>f.dateFin) return false;
-    if(f.agencia&&r.agencyId!==f.agencia) return false;
+    if(f.agencia==='__NEXT_LEVEL__'){
+      if(!isResaNextLevel(r)) return false;
+    }else if(f.agencia==='__AGENCE__'){
+      if(isResaNextLevel(r)) return false;
+      if(r.agencyId&&r.agencyId!=='__AGENCE__') return false;
+    }else if(f.agencia&&r.agencyId!==f.agencia) return false;
     if(f.statut&&r.statut!==f.statut) return false;
     if(f.type&&r.origineType!==f.type) return false;
     return true;
@@ -7044,7 +7083,7 @@ function bilanDetailHeaders(){
 function bilanDetailRowValues(r){
   const px=parseFloat(r.prixFinal)||0;
   const paid=bilanPaidAmount(r);
-  return[r.id||'',r.clientNom||'',fmtD(r.dateTransfer),r.heureTransfer||'',r.pointDepart||'',r.destination||'',px?px.toFixed(2)+' €':'—',paid?paid.toFixed(2)+' €':'—',bilanPaymentLabel(r),bilanStatutLabel(r.statut),r.agencyId||'—'];
+  return[r.id||'',r.clientNom||'',fmtD(r.dateTransfer),r.heureTransfer||'',r.pointDepart||'',r.destination||'',px?px.toFixed(2)+' €':'—',paid?paid.toFixed(2)+' €':'—',bilanPaymentLabel(r),bilanStatutLabel(r.statut),staffHotelLabel(r)];
 }
 function renderBilanDetailSection(rows){
   const tx=t();
@@ -7390,7 +7429,7 @@ const EXP_COL_DEFS=[
   {id:'transport',lab:'Transport',get:r=>r.numTransport||''},
   {id:'prix',lab:'Prix',get:r=>r.prixFinal?r.prixFinal+' €':''},
   {id:'statut',lab:'Statut',get:r=>r.statut||''},
-  {id:'hotel',lab:'Hôtel / Agence',get:r=>agDisplayLabel(r.agencyId)},
+  {id:'hotel',lab:'Hôtel / Agence',get:r=>staffHotelLabel(r)},
   {id:'paiement',lab:'Paiement',get:r=>r.statutPaiement||''},
   {id:'chauffeur',lab:'Motorista',get:r=>{
     const id=r.chauffeurId||'';
@@ -8060,14 +8099,14 @@ function renderUpcoming(){
         <div><div class="tl-time">${(r.heureTransfer||'—').toString().slice(0,5)}</div><div class="tl-time-lbl">h</div></div>
         <div class="tl-divider"></div>
         <div class="tl-body">
-          <div class="tl-ref">${r.id}</div>
+          <div class="tl-ref">${r.id}${isResaNextLevel(r)?' '+nlBadgeHtml():''}</div>
           <div class="tl-client">${r.clientNom||'—'}</div>
           <div class="tl-route">${ico} ${r.pointDepart||'—'} → ${r.destination||'—'}</div>
           <div class="tl-meta">
             <span>👤 ${r.personnes||'—'}</span>
             <span>🧳 ${r.malas||'0'}</span>
             ${r.numVol?`<span>✈️ ${r.numVol}</span>`:''}
-            ${agLabel?`<span>🏢 ${agLabel}</span>`:''}
+            ${isResaNextLevel(r)?`<span>${nlBadgeHtml()}</span>`:(agLabel?`<span>🏢 ${agLabel}</span>`:'')}
             <span>💶 ${r.prixFinal?r.prixFinal+' €':'—'}</span>
           </div>
         </div>
