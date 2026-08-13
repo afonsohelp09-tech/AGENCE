@@ -5030,15 +5030,19 @@ function renderTable(){
     const agName=r.agencyId?agNom(r.agencyId):'—';
     const paidBadge=r.statutPaiement==='payé'?`<span style="color:var(--success);font-weight:600;font-size:11px">✓ ${T2.paidYes}</span>`:`<span style="color:var(--ts);font-size:11px">—</span>`;
     const locked=staffIsResaFullEditLocked(r);
-    const canPago=r.statut!=='cancelado';
+    const nl=isResaNextLevel(r);
+    const nlBlock=staffIsNlParceiroBlocked(r);
+    const canPago=!nl&&r.statut!=='cancelado';
     const nlTag=(r.fromNextLevel||r.criadoPor==='NEXT_LEVEL'||r.canal==='NEXT_LEVEL')
-      ?' <span style="font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--gold-b);border-radius:4px;padding:1px 5px;font-weight:700" title="Next Level">NL</span>'
+      ?' <span style="font-size:9px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid var(--gold-b);border-radius:4px;padding:1px 5px;font-weight:700" title="Next Level — opções de parceiro">NL</span>'
       :'';
+    const showEdit=nl?!nlBlock:!locked;
+    const showAssign=!nl&&!locked;
     const acts=wrapActsMenu_(`
         <button class="btn btn-ghost btn-sm" onclick="openDetail('${r.id}')" title="Detalhe">👁</button>
-        ${!locked?`<button class="btn btn-warn btn-sm" onclick="openEditModal('${r.id}')" title="Editar">✏️</button>`:''}
+        ${showEdit?`<button class="btn btn-warn btn-sm" onclick="openEditModal('${r.id}')" title="${nl?'Confirmar / anular / preço':'Editar'}">✏️</button>`:''}
         <button class="btn btn-info btn-sm" onclick="openHistModal('${r.id}')" title="Histórico">📋</button>
-        ${!locked?`<button class="btn btn-success btn-sm" onclick="openAssignModal('${r.id}')" title="Hotel">🏢</button>`:''}
+        ${showAssign?`<button class="btn btn-success btn-sm" onclick="openAssignModal('${r.id}')" title="Hotel">🏢</button>`:''}
         ${canPago?`<button class="btn btn-ghost btn-sm" onclick="quickPago('${r.id}','${r.statutPaiement}')" title="Pagamento">💶</button>`:''}
       `);
     h+=`<tr class="${sel?'selected':''}">
@@ -5100,11 +5104,17 @@ async function bulkAction(action,label){
   if(!S.selectedIds.size)return;
   let ids=Array.from(S.selectedIds);
   if(action==='cancelado'||action==='confirmado'){
-    ids=ids.filter(id=>{const r=S.reservas.find(x=>x.id===id);return r&&!staffIsResaFullEditLocked(r);});
+    ids=ids.filter(id=>{
+      const r=S.reservas.find(x=>x.id===id);
+      if(!r)return false;
+      if(isResaNextLevel(r))return !staffIsNlParceiroBlocked(r);
+      return !staffIsResaFullEditLocked(r);
+    });
     if(!ids.length){toast(t().staffLockPast,'warn');return;}
   }else if(action==='realizado'){
     ids=ids.filter(id=>{
       const r=S.reservas.find(x=>x.id===id);
+      if(isResaNextLevel(r)) return r&&!staffIsNlParceiroBlocked(r);
       const y=staffTransferYmd(r);
       return r&&y&&y<=staffYmdToday()&&r.statut==='confirmado';
     });
@@ -5399,6 +5409,34 @@ function staffIsResaFullEditLocked(r){
   if(!r)return false;
   return staffIsTransferDatePast(r);
 }
+function isResaNextLevel(r){
+  return !!(r&&(r.fromNextLevel||r.criadoPor==='NEXT_LEVEL'||r.canal==='NEXT_LEVEL'));
+}
+function staffIsNlTransferPast(r){
+  if(!r)return false;
+  try{
+    const d=String(r.dateTransfer||'').trim().slice(0,10);
+    if(!d||!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;
+    let h=String(r.heureTransfer||'00:00').trim();
+    const m=h.match(/^(\d{1,2}):(\d{2})/);
+    const hh=m?('0'+m[1]).slice(-2):'00';
+    const mm=m?m[2]:'00';
+    const dt=new Date(d+'T'+hh+':'+mm+':00');
+    if(isNaN(dt.getTime()))return false;
+    return Date.now()>dt.getTime();
+  }catch(e){return false;}
+}
+/** NL : comme Transfer Parceiro — bloqué si réalisé ou date/heure passée */
+function staffIsNlParceiroBlocked(r){
+  if(!isResaNextLevel(r))return false;
+  return r.statut==='realizado'||staffIsNlTransferPast(r);
+}
+const STAFF_NL_LOCK=['ef-nom','ef-email','ef-tel','ef-ota','ef-depart','ef-dest','ef-addr-dep','ef-addr-dest','ef-date','ef-heure','ef-pax','ef-malas','ef-vol','ef-transport','ef-room','ef-agence','ef-paiement'];
+function staffApplyNlParceiroForm(){
+  staffApplyEditFormLocked(false);
+  STAFF_NL_LOCK.forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true;});
+  ['ef-statut','ef-prix','ef-comments'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false;});
+}
 /** Mode clôture staff : date passée, résa non annulée */
 function staffIsResaClosureMode(r){
   if(!r||r.statut==='cancelado')return false;
@@ -5419,6 +5457,7 @@ function staffApplyEditFormLocked(on){
 }
 function staffResetEditFormMode(){
   S.staffEditCommentOnly=false;
+  S.staffNlParceiro=false;
   S.staffCommentBase='';
   staffApplyEditFormLocked(false);
   const ttl=document.querySelector('#ov-edit .modal-ttl');
@@ -5567,10 +5606,12 @@ async function openDetail(id){
 
     const locked=staffIsResaFullEditLocked(r);
     const closure=staffIsResaClosureMode(r);
-    const canPago=r.statut!=='cancelado';
-    document.getElementById('btn-cancel-detail').style.display=!locked&&r.statut!=='realizado'&&r.statut!=='cancelado'?'inline-flex':'none';
+    const nl=isResaNextLevel(r);
+    const nlBlock=staffIsNlParceiroBlocked(r);
+    const canPago=!nl&&r.statut!=='cancelado';
+    document.getElementById('btn-cancel-detail').style.display=(!nl&&!locked&&r.statut!=='realizado'&&r.statut!=='cancelado')||(nl&&!nlBlock&&r.statut!=='cancelado')?'inline-flex':'none';
     const ymd=staffTransferYmd(r);
-    const canReal=ymd&&ymd<=staffYmdToday()&&r.statut==='confirmado';
+    const canReal=!nl&&ymd&&ymd<=staffYmdToday()&&r.statut==='confirmado';
     document.getElementById('btn-realizado').style.display=canReal?'inline-flex':'none';
     const btnPago=document.getElementById('btn-pago-detail');
     if(btnPago)btnPago.style.display=canPago?'inline-flex':'none';
@@ -5578,16 +5619,25 @@ async function openDetail(id){
     const btnAs=document.getElementById('btn-assign-detail');
     const btnCopy=document.getElementById('btn-copy-nova');
     const btnWa=document.getElementById('ag-wa-box');
+    const chBox=document.getElementById('d-chauffeur-box');
     if(btnEd){
-      btnEd.style.display='inline-flex';
-      btnEd.textContent=locked?('💬 '+t().staffAddComment):('✏️ '+t().staffBtnEdit);
+      if(nl){
+        btnEd.style.display=nlBlock?'none':'inline-flex';
+        btnEd.textContent='✏️ Confirmar / preço';
+      }else{
+        btnEd.style.display='inline-flex';
+        btnEd.textContent=locked?('💬 '+t().staffAddComment):('✏️ '+t().staffBtnEdit);
+      }
     }
-    if(btnAs)btnAs.style.display=locked?'none':'inline-flex';
-    if(btnCopy)btnCopy.style.display='inline-flex';
-    if(btnWa&&closure)btnWa.style.display='none';
+    if(btnAs)btnAs.style.display=(!nl&&!locked)?'inline-flex':'none';
+    if(btnCopy)btnCopy.style.display=nl?'none':'inline-flex';
+    if(chBox)chBox.style.display=nl?'none':'block';
+    if(btnWa&&(closure||nl))btnWa.style.display='none';
     const ban=document.getElementById('d-closure-banner');
     if(ban){
-      if(closure){ban.textContent=staffClosureBannerText();ban.style.display='block';}
+      if(nl&&nlBlock){ban.textContent='Next Level — transferência passada ou realizada: consulta apenas (como o portal parceiro).';ban.style.display='block';}
+      else if(nl){ban.textContent='Reserva Next Level: opções de parceiro — confirmar, anular ou alterar o preço. Cliente e trajeto não são editáveis.';ban.style.display='block';}
+      else if(closure){ban.textContent=staffClosureBannerText();ban.style.display='block';}
       else ban.style.display='none';
     }
   openModal('ov-detail');
@@ -5914,6 +5964,7 @@ async function doRealizadoDetail(){
 
 async function quickPago(id,statut){
   const rx=S.reservas.find(x=>x.id===id);
+  if(isResaNextLevel(rx)){toast('Reserva Next Level: pagamento não disponível (regra parceiro).','warn');return;}
   if(!rx||rx.statut==='cancelado'){toast(t().staffLockPast,'warn');return;}
   const newS=statut==='payé'?'non_payé':'payé';
   showConfirmDialog(`Changer paiement → "${newS}" ?`,async()=>{
@@ -6123,6 +6174,22 @@ function openEditModal(id){
   const r=S.reservas.find(x=>x.id===id);if(!r)return;
   S.curId=id;document.getElementById('e-id').textContent=id;
   document.getElementById('e-msg').className='modal-msg';
+  if(isResaNextLevel(r)){
+    if(staffIsNlParceiroBlocked(r)){
+      toast('Next Level: consulta apenas (transferência passada ou realizada).','warn');
+      return;
+    }
+    S.staffEditCommentOnly=false;
+    S.staffNlParceiro=true;
+    staffFillEditFormFields(r);
+    staffApplyNlParceiroForm();
+    const ttl=document.querySelector('#ov-edit .modal-ttl');
+    if(ttl)ttl.textContent='NL · Confirmar / anular / preço';
+    showMsgEl('e-msg','Como o portal parceiro Next Level: só estatuto, preço e comentário.','success');
+    openModal('ov-edit');
+    return;
+  }
+  S.staffNlParceiro=false;
   if(staffIsResaDateLocked(r)){
     S.staffEditCommentOnly=true;
     S.staffCommentBase=(r.commentaires||'').trim();
@@ -6152,6 +6219,12 @@ async function doSaveEdit(){
     if(!add){showMsgEl('e-msg',t().staffCommentNeed,'error');if(btn)btn.disabled=false;return;}
     const base=(S.staffCommentBase||'').trim();
     champs={commentaires:base?base+'\n'+add:add};
+  }else if(S.staffNlParceiro||isResaNextLevel(r0)){
+    champs={
+      statut:document.getElementById('ef-statut').value,
+      prixFinal:document.getElementById('ef-prix').value,
+      commentaires:document.getElementById('ef-comments').value.trim()
+    };
   }else{
     champs={statut:document.getElementById('ef-statut').value,prixFinal:document.getElementById('ef-prix').value,clientNom:document.getElementById('ef-nom').value.trim(),clientEmail:document.getElementById('ef-email').value.trim(),telephone:normaliserTelephonePourSauvegarde(document.getElementById('ef-tel').value),numReservaOta:document.getElementById('ef-ota').value.trim(),pointDepart:document.getElementById('ef-depart').value.trim(),destination:document.getElementById('ef-dest').value.trim(),adresseDepart:document.getElementById('ef-addr-dep').value.trim(),adresseDestination:document.getElementById('ef-addr-dest').value.trim(),dateTransfer:document.getElementById('ef-date').value,heureTransfer:document.getElementById('ef-heure').value,personnes:document.getElementById('ef-pax').value,malas:document.getElementById('ef-malas').value,numVol:document.getElementById('ef-vol').value.trim(),numTransport:document.getElementById('ef-transport').value.trim(),numChambre:document.getElementById('ef-room').value.trim(),agencyId:document.getElementById('ef-agence').value,statutPaiement:document.getElementById('ef-paiement').value,commentaires:document.getElementById('ef-comments').value.trim()};
   }
@@ -6208,6 +6281,7 @@ async function openHistModal(id){
 // ═══════════════════════════════════════════════════════════
 function openAssignModal(id){
   const r=S.reservas.find(x=>x.id===id);if(!r)return;
+  if(isResaNextLevel(r)){toast('Reserva Next Level: atribuição de hotel não disponível (regra parceiro).','warn');return;}
   if(staffIsResaDateLocked(r)){toast(t().staffLockPast,'warn');return;}
   S.curId=id;document.getElementById('as-id').textContent=id;
   document.getElementById('as-msg').className='modal-msg';
